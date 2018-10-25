@@ -51,7 +51,7 @@
  * @param c_comm Cartesian communicator returned by \ref accfft_create_comm
  * @return
  */
-int accfft_local_size_dft_r2c(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2c(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_r2c_t<double>(n, isize, istart, osize, ostart, c_comm);
 }
@@ -113,8 +113,8 @@ accfft_plan* accfft_plan_dft_3d_r2c(int * n, double * data, double * data_out,
   int* osize_xi = plan->osize_xi;
   int* isize = plan->isize;
 
-	int alloc_local;
-	int alloc_max = 0;
+	size_t alloc_local;
+	size_t alloc_max = 0;
 	int n_tuples_o, n_tuples_i;
 	plan->inplace == true ? n_tuples_i = (n[2] / 2 + 1) * 2 : n_tuples_i = n[2];
 	n_tuples_o = (n[2] / 2 + 1) * 2;
@@ -519,7 +519,7 @@ accfft_plan* accfft_plan_dft_3d_r2c(int * n, double * data, double * data_out,
  * @param c_comm Cartesian communicator returned by \ref accfft_create_comm
  * @return
  */
-int accfft_local_size_dft_c2c(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_c2c(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_c2c_t<double>(n, isize, istart, osize, ostart, c_comm);
 }
@@ -576,8 +576,9 @@ accfft_plan* accfft_plan_dft_3d_c2c(int * n, Complex * data, Complex * data_out,
 	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
 	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
 
-	int alloc_local;
-	int alloc_max = 0, n_tuples = (n[2] / 2 + 1) * 2;
+	size_t alloc_local;
+	size_t alloc_max = 0;
+  int n_tuples = (n[2] / 2 + 1) * 2;
 
 	//int isize[3],osize[3],istart[3],ostart[3];
 	alloc_max = accfft_local_size_dft_c2c(n, plan->isize, plan->istart,
@@ -1105,7 +1106,7 @@ void accfft_execute_y(accfft_plantd* plan, int direction, double * data,
 	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
 	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
   int *osize_y = plan->osize_y;
-  int64_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
+  size_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
   double* cwork = plan->Mem_mgr->buffer_3;
 	if (direction == -1) {
 		/**************************************************************/
@@ -1224,8 +1225,8 @@ void accfft_execute_x(accfft_plantd* plan, int direction, double * data,
 	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
 	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
   int* osize_x = plan->osize_x;
-  int64_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
-  int64_t alloc_max = plan->alloc_max;
+  size_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
+  size_t alloc_max = plan->alloc_max;
 
   double* cwork = plan->Mem_mgr->buffer_3;
   // double alpha = 1;
@@ -1377,7 +1378,7 @@ void accfft_execute(accfft_plantd* plan, int direction, double * data,
       alpha.real = 1.0;
       alpha.imag = 0;
       timings[0] += -MPI_Wtime();
-      for(int i = 0; i < osize_1[0]; ++i)
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i)
         mkl_zimatcopy ('r', 't',  //const char ordering, const char trans,
                        osize_1[1], osize_1[2], //size_t rows, size_t cols,
                        alpha, (MKL_Complex16*)&data_out[2*i*osize_1[1]*osize_1[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
@@ -1390,7 +1391,7 @@ void accfft_execute(accfft_plantd* plan, int direction, double * data,
 		  fft_time += MPI_Wtime();
 
       timings[0] += -MPI_Wtime();
-      for(int i = 0; i < osize_1[0]; ++i)
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i)
         mkl_zimatcopy ('r', 't',  //const char ordering, const char trans,
                        osize_1[2], osize_1[1],//size_t rows, size_t cols,
                        alpha, (MKL_Complex16*)&data_out[2*i*(osize_1[1])*osize_1[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
@@ -1504,7 +1505,7 @@ void accfft_execute(accfft_plantd* plan, int direction, double * data,
       MKL_Complex16 alpha;
       alpha.real =1.0;
       alpha.imag = 0;
-      for(int i = 0; i < osize_1[0]; ++i){
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i){
         mkl_zimatcopy ('r','t',  //const char ordering, const char trans,
                        osize_1i[1], osize_1i[2],//size_t rows, size_t cols,
                        alpha, (MKL_Complex16*)&data[2*i*osize_1i[1]*osize_1i[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
@@ -1516,7 +1517,7 @@ void accfft_execute(accfft_plantd* plan, int direction, double * data,
 				(fftw_complex*) data);
 		  fft_time += MPI_Wtime();
 
-      for(int i = 0; i < osize_1[0]; ++i)
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i)
         mkl_zimatcopy ('r','t',  //const char ordering, const char trans,
                        osize_1i[2], osize_1i[1],//size_t rows, size_t cols,
                        alpha, (MKL_Complex16*)&data[2*i*(osize_1i[1])*osize_1i[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,

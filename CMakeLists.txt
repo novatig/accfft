@@ -122,11 +122,13 @@ install(TARGETS accfft_utils DESTINATION lib)
 if(BUILD_GPU)
   find_package(CUDA REQUIRED)
 
-  if(NOT CUDA_NVCC_FLAGS)
-    list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_20,code=sm_20)
-    list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_30,code=sm_30)
-    list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_35,code=sm_35)
-  endif()
+  cuda_select_nvcc_arch_flags(ARCH_FLAGS Auto)
+  list(APPEND CUDA_NVCC_FLAGS ${ARCH_FLAGS})
+  #if(NOT CUDA_NVCC_FLAGS)
+  #  list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_20,code=sm_20)
+  #  list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_30,code=sm_30)
+  #  list(APPEND CUDA_NVCC_FLAGS -gencode arch=compute_35,code=sm_35)
+  #endif()
 
   list(APPEND CUDA_NVCC_FLAGS --compiler-options -fno-strict-aliasing -lineinfo)
 
@@ -185,8 +187,9 @@ endif(BUILD_GPU)
 ####################
 # EXAMPLES / TESTS #
 ####################
-add_subdirectory(steps/step1 )
-add_subdirectory(steps/step2 EXCLUDE_FROM_ALL)
-add_subdirectory(steps/step3 EXCLUDE_FROM_ALL )
-add_subdirectory(steps/step4 EXCLUDE_FROM_ALL )
-add_subdirectory(steps/step5 EXCLUDE_FROM_ALL )
+#EXCLUDE_FROM_ALL
+add_subdirectory(steps/step1  )
+add_subdirectory(steps/step2  )
+add_subdirectory(steps/step3  )
+add_subdirectory(steps/step4  )
+add_subdirectory(steps/step5  )

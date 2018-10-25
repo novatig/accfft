@@ -23,24 +23,28 @@ void step1_gpu(int *n) {
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 	/* Create Cartesian Communicator */
-	int c_dims[2] = { 0 };
+	int c_dims[2] = {nprocs, 1};
 	MPI_Comm c_comm;
 	accfft_create_comm(MPI_COMM_WORLD, c_dims, &c_comm);
 
 	float *data, *data_cpu;
 	Complexf *data_hat;
 	double f_time = 0 * MPI_Wtime(), i_time = 0, setup_time = 0;
-	int alloc_max = 0;
+	size_t alloc_max = 0;
 
 	int isize[3], osize[3], istart[3], ostart[3];
 	/* Get the local pencil size and the allocation size */
 	alloc_max = accfft_local_size_dft_r2c_gpuf(n, isize, istart, osize, ostart,
 			c_comm);
 
-	data_cpu = (float*) malloc(isize[0] * isize[1] * isize[2] * sizeof(float));
+	data_cpu = (float*) malloc(isize[0] * isize[1] * (isize[2] * sizeof(float)));
 	//data_hat=(Complexf*)accfft_alloc(alloc_max);
-	cudaMalloc((void**) &data, isize[0] * isize[1] * isize[2] * sizeof(float));
+	cudaMalloc((void**) &data, isize[0] * isize[1] * (isize[2] * sizeof(float)));
 	cudaMalloc((void**) &data_hat, alloc_max);
+
+	float *data2_cpu, *data2;
+	cudaMalloc((void**) &data2, isize[0] * isize[1] * (isize[2] * sizeof(float)));
+	data2_cpu = (float*) malloc(isize[0] * isize[1] * (isize[2] * sizeof(float)));
 
 	//accfft_init(nthreads);
 
@@ -52,14 +56,15 @@ void step1_gpu(int *n) {
 
 	/* Warm Up */
 	accfft_execute_r2c_gpuf(plan, data, data_hat);
+  accfft_execute_c2r_gpuf(plan, data_hat, data2);
 	accfft_execute_r2c_gpuf(plan, data, data_hat);
+  accfft_execute_c2r_gpuf(plan, data_hat, data2);
 	accfft_execute_r2c_gpuf(plan, data, data_hat);
-	accfft_execute_r2c_gpuf(plan, data, data_hat);
-	accfft_execute_r2c_gpuf(plan, data, data_hat);
+  accfft_execute_c2r_gpuf(plan, data_hat, data2);
 
 	/*  Initialize data */
 	initialize(data_cpu, n, c_comm);
-	cudaMemcpy(data, data_cpu, isize[0] * isize[1] * isize[2] * sizeof(float),
+	cudaMemcpy(data, data_cpu, isize[0] * isize[1] * (isize[2] * sizeof(float)),
 			cudaMemcpyHostToDevice);
 	// initialize_gpu(data,n,isize,istart); // GPU version of initialize function
 
@@ -72,17 +77,13 @@ void step1_gpu(int *n) {
 
 	MPI_Barrier(c_comm);
 
-	float *data2_cpu, *data2;
-	cudaMalloc((void**) &data2, isize[0] * isize[1] * isize[2] * sizeof(float));
-	data2_cpu = (float*) malloc(isize[0] * isize[1] * isize[2] * sizeof(float));
-
 	/* Perform backward FFT */
 	i_time -= MPI_Wtime();
 	accfft_execute_c2r_gpuf(plan, data_hat, data2);
 	i_time += MPI_Wtime();
 
 	/* copy back results on CPU */
-	cudaMemcpy(data2_cpu, data2, isize[0] * isize[1] * isize[2] * sizeof(float),
+	cudaMemcpy(data2_cpu, data2, isize[0] * isize[1] * (isize[2] * sizeof(float)),
 			cudaMemcpyDeviceToHost);
 
 	/* Check Error */

@@ -21,7 +21,6 @@
 #ifndef ACCFFT_OPERATORS_H
 #define ACCFFT_OPERATORS_H
 #include <mpi.h>
-#include <fftw3.h>
 #include <omp.h>
 #include <iostream>
 #include <cmath>

@@ -21,7 +21,6 @@
 #ifndef ACCFFT_COMMON_H
 #define ACCFFT_COMMON_H
 #include <mpi.h>
-#include <fftw3.h>
 #include <omp.h>
 #include <iostream>
 #include <cmath>
@@ -47,14 +46,14 @@ int accfft_init();
 void* accfft_alloc(ptrdiff_t size);
 void accfft_free(void * ptr);
 template <typename T>
-int dfft_get_local_size_t(int N0, int N1, int N2, int * isize, int * istart,
+size_t dfft_get_local_size_t(int N0, int N1, int N2, int * isize, int * istart,
 		MPI_Comm c_comm);
 
 template<typename T>
-int accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 template<typename T>
-int accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 
 #endif

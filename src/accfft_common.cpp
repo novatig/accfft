@@ -27,6 +27,7 @@
 #include <cmath>
 #include <math.h>
 #include "accfft_common.h"
+#include <fftw3.h>
 
 /**
  * Allocates aligned memory to enable SIMD
@@ -47,7 +48,7 @@ void accfft_free(void * ptr) {
 
 // uses 2D comm to compute N0/P0 x N1/P1 x tuple for each proc
 template<typename T>
-int dfft_get_local_size_t(int N0, int N1, int tuple, int * isize, int * istart,
+size_t dfft_get_local_size_t(int N0, int N1, int tuple, int * isize, int * istart,
 		MPI_Comm c_comm) {
 	int nprocs, procid;
 	MPI_Comm_rank(c_comm, &procid);
@@ -72,31 +73,31 @@ int dfft_get_local_size_t(int N0, int N1, int tuple, int * isize, int * istart,
 		isize[1] *= (int) isize[1] > 0;
 		istart[1] = N1 - isize[1];
 	}
-#ifdef VERBOSE2
-	if (VERBOSE >= 2) {
-		for (int r = 0; r < np[0]; r++)
-			for (int c = 0; c < np[1]; c++) {
-				if ((coords[0] == r) && (coords[1] == c))
-					std::cout << coords[0] << "," << coords[1] << " isize[0]= "
-							<< isize[0] << " isize[1]= " << isize[1]
-							<< " isize[2]= " << isize[2] << " istart[0]= "
-							<< istart[0] << " istart[1]= " << istart[1]
-							<< " istart[2]= " << istart[2] << std::endl;
-			}
-	}
-#endif
-	int alloc_local = isize[0] * isize[1] * isize[2] * sizeof(T);
+  #ifdef VERBOSE2
+  	if (VERBOSE >= 2) {
+  		for (int r = 0; r < np[0]; r++)
+  			for (int c = 0; c < np[1]; c++) {
+  				if ((coords[0] == r) && (coords[1] == c))
+  					std::cout << coords[0] << "," << coords[1] << " isize[0]= "
+  							<< isize[0] << " isize[1]= " << isize[1]
+  							<< " isize[2]= " << isize[2] << " istart[0]= "
+  							<< istart[0] << " istart[1]= " << istart[1]
+  							<< " istart[2]= " << istart[2] << std::endl;
+  			}
+  	}
+  #endif
+	size_t alloc_local = isize[0] * isize[1] * ( isize[2] * sizeof(T) );
 
 	return alloc_local;
 }
 
-template int dfft_get_local_size_t<double>(int N0, int N1, int N2, int * isize, int * istart,
+template size_t dfft_get_local_size_t<double>(int N0, int N1, int N2, int * isize, int * istart,
     MPI_Comm c_comm);
-template int dfft_get_local_size_t<float>(int N0, int N1, int N2, int * isize, int * istart,
+template size_t dfft_get_local_size_t<float>(int N0, int N1, int N2, int * isize, int * istart,
     MPI_Comm c_comm);
 
 template<typename T>
-int accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
 
 	int procid;
@@ -110,10 +111,11 @@ int accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
 	int osize_x[3] = { 0 }, ostart_x[3] = { 0 };
 	int osize_xi[3] = { 0 }, ostart_xi[3] = { 0 };
 
-	int alloc_local;
-	int alloc_max = 0, n_tuples;
+	size_t alloc_local;
+	size_t alloc_max = 0;
+  int n_tuples = (n[2] / 2 + 1) * 2; //SNAFU
 	//inplace==true ? n_tuples=(n[2]/2+1)*2:  n_tuples=n[2];
-	n_tuples = (n[2] / 2 + 1) * 2; //SNAFU
+
 	alloc_local = dfft_get_local_size_t<T>(n[0], n[1], n_tuples, osize_0,
 			ostart_0, c_comm);
 	alloc_max = std::max(alloc_max, alloc_local);
@@ -191,18 +193,19 @@ int accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
 
 } // end accfft_local_size_dft_r2c
 
-template int accfft_local_size_dft_r2c_t<double>(int * n, int * isize,
+template size_t accfft_local_size_dft_r2c_t<double>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
-template int accfft_local_size_dft_r2c_t<Complex>(int * n, int * isize,
+template size_t accfft_local_size_dft_r2c_t<Complex>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
-template int accfft_local_size_dft_r2c_t<float>(int * n, int * isize,
+template size_t accfft_local_size_dft_r2c_t<float>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
-template int accfft_local_size_dft_r2c_t<Complexf>(int * n, int * isize,
+template size_t accfft_local_size_dft_r2c_t<Complexf>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
 
 template<typename T>
-int accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
-		int *ostart, MPI_Comm c_comm) {
+size_t accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
+		int *ostart, MPI_Comm c_comm)
+{
 
 	int osize_0[3] = { 0 }, ostart_0[3] = { 0 };
 	int osize_1[3] = { 0 }, ostart_1[3] = { 0 };
@@ -210,8 +213,9 @@ int accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
 	int osize_1i[3] = { 0 }, ostart_1i[3] = { 0 };
 	int osize_2i[3] = { 0 }, ostart_2i[3] = { 0 };
 
-	int alloc_local;
-	int alloc_max = 0, n_tuples = n[2] * 2;
+	size_t alloc_local;
+	size_t alloc_max = 0;
+  int n_tuples = n[2] * 2;
 	alloc_local = dfft_get_local_size_t<T>(n[0], n[1], n[2], osize_0, ostart_0,
 			c_comm);
 	alloc_max = std::max(alloc_max, alloc_local);
@@ -255,13 +259,13 @@ int accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
 
 }
 
-template int accfft_local_size_dft_c2c_t<double>(int * n, int * isize,
+template size_t accfft_local_size_dft_c2c_t<double>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
-template int accfft_local_size_dft_c2c_t<Complex>(int * n, int * isize,
+template size_t accfft_local_size_dft_c2c_t<Complex>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
-template int accfft_local_size_dft_c2c_t<float>(int * n, int * isize,
+template size_t accfft_local_size_dft_c2c_t<float>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
-template int accfft_local_size_dft_c2c_t<Complexf>(int * n, int * isize,
+template size_t accfft_local_size_dft_c2c_t<Complexf>(int * n, int * isize,
 		int * istart, int * osize, int *ostart, MPI_Comm c_comm);
 /**
  * Creates a Cartesian communicator of size c_dims[0]xc_dims[1] from its input.
@@ -272,7 +276,8 @@ template int accfft_local_size_dft_c2c_t<Complexf>(int * n, int * isize,
  * @param c_dims A 2D integer array, which sets the size of the Cartesian array to c_dims[0]xc_dims[1]
  * @param c_comm A pointer to the Cartesian communicator which will be created
  */
-void accfft_create_comm(MPI_Comm in_comm, int * c_dims, MPI_Comm *c_comm) {
+void accfft_create_comm(MPI_Comm in_comm, int * c_dims, MPI_Comm *c_comm)
+{
 
 	int nprocs, procid;
 	MPI_Comm_rank(in_comm, &procid);

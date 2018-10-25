@@ -37,7 +37,7 @@
 template <typename T, typename Tc, typename P>
 struct accfft_plan_t {
 	int N[3];
-	int alloc_max;
+	size_t alloc_max;
   Mem_Mgr<T> * Mem_mgr;
 	T_Plan<T> * T_plan_1;
 	T_Plan<T> * T_plan_2;
@@ -103,10 +103,10 @@ struct accfft_planf : accfft_plan_t<float, Complexf, fftwf_plan> {
 };
 
 int accfft_init(int nthreads);
-int dfft_get_local_size(int N0, int N1, int N2, int * isize, int * istart,
+size_t dfft_get_local_size(int N0, int N1, int N2, int * isize, int * istart,
 		MPI_Comm c_comm);
 
-int accfft_local_size_dft_c2cf(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_c2cf(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 accfft_planf* accfft_plan_dft_3d_c2cf(int * n, Complexf * data,
 		Complexf * data_out, MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
@@ -127,7 +127,7 @@ void accfft_destroy_plan(accfft_plantf * plan);
 void accfft_destroy_plan(accfft_planf * plan);
 void accfft_cleanup();
 
-int accfft_local_size_dft_r2cf(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2cf(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 
 accfft_planf* accfft_plan_dft_3d_r2c(int * n, float * data, float * data_out,
@@ -156,7 +156,7 @@ void accfft_execute_c2rf(accfft_planf* plan, Complexf * data = NULL,
 //		double * timer = NULL, std::bitset<3> XYZ = 111);
 
 template<typename T>
-int accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 
 // templates for execution in z direction only

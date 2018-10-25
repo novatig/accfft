@@ -70,7 +70,7 @@ namespace par {
     }
     omp_par::scan(&s_cnt[0],&s_dsp[0],np+1);
 
-    size_t range[2]={0,np};
+    size_t range[2]={0, (size_t) np};
     for(size_t np_new=np; np_new>1; np_new/=kway){
       double tt=omp_get_wtime();
       if(kway>np_new) kway=np_new;
@@ -211,7 +211,7 @@ namespace par {
         }
       }
 
-      size_t range[2]={0,np};
+      size_t range[2]={0, (size_t) np};
       for(size_t np_new=np; np_new>1; np_new/=kway){
         double tt=omp_get_wtime();
         if(kway>np_new) kway=np_new;
@@ -484,4 +484,3 @@ namespace par {
 
 #endif
 }
-

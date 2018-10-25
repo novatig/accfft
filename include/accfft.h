@@ -37,7 +37,7 @@
 template <typename T, typename Tc, typename P>
 struct accfft_plan_t {
 	int N[3];
-	int alloc_max;
+	size_t alloc_max;
   Mem_Mgr<T> * Mem_mgr;
 	T_Plan<T> * T_plan_1;
 	T_Plan<T> * T_plan_2;
@@ -106,13 +106,13 @@ struct accfft_plan : accfft_plan_t<double, Complex, fftw_plan> {
 
 
 int accfft_init(int nthreads);
-int accfft_local_size_dft_r2c(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2c(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 
 accfft_plan* accfft_plan_dft_3d_r2c(int * n, double * data, double * data_out,
 		MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
 
-int accfft_local_size_dft_c2c(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_c2c(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm);
 accfft_plan* accfft_plan_dft_3d_c2c(int * n, Complex * data, Complex * data_out,
 		MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);

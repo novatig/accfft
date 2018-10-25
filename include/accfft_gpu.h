@@ -36,7 +36,7 @@
 
 struct accfft_plan_gpu {
 	int N[3];
-	int alloc_max;
+	size_t alloc_max;
 	Mem_Mgr_gpu<double> * Mem_mgr;
 	T_Plan_gpu<double> * T_plan_1;
 	T_Plan_gpu<double> * T_plan_2;
@@ -94,15 +94,15 @@ struct accfft_plan_gpu {
 
 };
 
-int dfft_get_local_size_gpu(int N0, int N1, int N2, int * isize, int * istart,
+size_t dfft_get_local_size_gpu(int N0, int N1, int N2, int * isize, int * istart,
 		MPI_Comm c_comm);
-int accfft_local_size_dft_r2c_gpu(int * n, int * isize, int * istart,
+size_t accfft_local_size_dft_r2c_gpu(int * n, int * isize, int * istart,
 		int * osize, int *ostart, MPI_Comm c_comm);
 
 accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 		double * data_out_d, MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
 
-int accfft_local_size_dft_c2c_gpu(int * n, int * isize, int * istart,
+size_t accfft_local_size_dft_c2c_gpu(int * n, int * isize, int * istart,
 		int * osize, int *ostart, MPI_Comm c_comm);
 
 accfft_plan_gpu* accfft_plan_dft_3d_c2c_gpu(int * n, Complex * data_d,
@@ -129,7 +129,7 @@ void accfft_execute_c2r_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
 		double * timer = NULL, std::bitset<3> XYZ = 111);
 
 template<typename T>
-int accfft_local_size_dft_r2c_gpu_t(int * n, int * isize, int * istart,
+size_t accfft_local_size_dft_r2c_gpu_t(int * n, int * isize, int * istart,
 		int * osize, int *ostart, MPI_Comm c_comm);
 
 // templates for execution in z direction only

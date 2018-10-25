@@ -21,6 +21,8 @@
 #ifndef _TRANSPOSE_
 #define _TRANSPOSE_
 #include <vector>
+#include <cstddef>
+
 template<typename T>
 class Mem_Mgr {
 public:

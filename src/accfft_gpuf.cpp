@@ -56,7 +56,7 @@ void accfft_cleanup_gpuf() {
  * @param c_comm Cartesian communicator returned by \ref accfft_create_comm
  * @return
  */
-int accfft_local_size_dft_r2c_gpuf(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2c_gpuf(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_r2c_t<float>(n, isize, istart, osize, ostart, c_comm);
 }
@@ -110,7 +110,7 @@ accfft_plan_gpuf* accfft_plan_dft_3d_r2c_gpuf(int * n, float * data_d,
   int* osize_xi = plan->osize_xi;
   int* isize = plan->isize;
 
-	int alloc_max = 0;
+	size_t alloc_max = 0;
 	int n_tuples_i, n_tuples_o;
 	//plan->inplace==true ? n_tuples=(n[2]/2+1)*2: n_tuples=n[2]*2;
 	plan->inplace == true ? n_tuples_i = (n[2] / 2 + 1) * 2 : n_tuples_i = n[2];
@@ -498,7 +498,7 @@ void accfft_execute_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d,
 		/**************************************************************/
 		if (xyz[1]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (int i = 0; i < osize_1[0]; ++i) {
+			for (size_t i = 0; i < (size_t) osize_1[0]; ++i) {
 				checkCuda_accfft(
 						cufftExecC2C(plan->fplan_1,
 								(cufftComplex*) &data_out_d[2 * i * osize_1[1]
@@ -561,7 +561,7 @@ void accfft_execute_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d,
 		/**************************************************************/
 		if (xyz[1]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (int i = 0; i < osize_1i[0]; ++i) {
+			for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
 				checkCuda_accfft(
 						cufftExecC2C(plan->fplan_1,
 								(cufftComplex*) &data_d[2 * i * NY * osize_1i[2]],
@@ -679,7 +679,7 @@ void accfft_execute_c2r_gpuf(accfft_plan_gpuf* plan, Complexf * data,
  * @param c_comm Cartesian communicator returned by \ref accfft_create_comm
  * @return
  */
-int accfft_local_size_dft_c2c_gpuf(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_c2c_gpuf(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_c2c_t<float>(n, isize, istart, osize, ostart, c_comm);
 }
@@ -730,8 +730,9 @@ accfft_plan_gpuf* accfft_plan_dft_3d_c2c_gpuf(int * n, Complexf * data_d,
 	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
 	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
 
-	int alloc_local;
-	int alloc_max = 0, n_tuples = n[2] * 2;
+	size_t alloc_local;
+	size_t alloc_max = 0;
+  int n_tuples = n[2] * 2;
 
 	//int isize[3],osize[3],istart[3],ostart[3];
 	alloc_max = accfft_local_size_dft_c2c_gpuf(n, plan->isize, plan->istart,
@@ -998,7 +999,7 @@ void accfft_execute_c2c_gpuf(accfft_plan_gpuf* plan, int direction,
 		/**************************************************************/
 		if (xyz[1]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (int i = 0; i < osize_1[0]; ++i) {
+			for (size_t i = 0; i < (size_t) osize_1[0]; ++i) {
 				checkCuda_accfft(
 						cufftExecC2C(plan->fplan_1,
 								(cufftComplex*) &data_out_d[i * osize_1[1]
@@ -1065,7 +1066,7 @@ void accfft_execute_c2c_gpuf(accfft_plan_gpuf* plan, int direction,
 		/**************************************************************/
 		if (xyz[1]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (int i = 0; i < osize_1i[0]; ++i) {
+			for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
 				checkCuda_accfft(
 						cufftExecC2C(plan->fplan_1,
 								(cufftComplex*) &data_d[i * NY * osize_1i[2]],
@@ -1317,7 +1318,7 @@ void accfft_execute_y_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d
 	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
 	int NY = plan->N[1];
 	float dummy_time = 0;
-  int64_t alloc_max = plan->alloc_max;
+  size_t alloc_max = plan->alloc_max;
 
 	int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
 	int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
@@ -1326,7 +1327,7 @@ void accfft_execute_y_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d
 	//int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
   int *osize_y = plan->osize_y;
   int *osize_yi = plan->osize_yi;
-  int64_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
+  size_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
   float* cwork_d = plan->Mem_mgr->buffer_d3;
 
 	if (direction == -1) {
@@ -1344,7 +1345,7 @@ void accfft_execute_y_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d
 		/*******************  N0/P0 x N1 x N2/P1 **********************/
 		/**************************************************************/
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-    for (int i = 0; i < plan->osize_y[0]; ++i) {
+    for (size_t i = 0; i < (size_t) plan->osize_y[0]; ++i) {
       checkCuda_accfft(
           cufftExecR2C(plan->fplan_y,
             (cufftReal*) &cwork_d[i
@@ -1363,7 +1364,7 @@ void accfft_execute_y_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d
 		/*******************  N0/P0 x N1 x N2/P1 **********************/
 		/**************************************************************/
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-    for (int i = 0; i < osize_yi[0]; ++i) {
+    for (size_t i = 0; i < (size_t) osize_yi[0]; ++i) {
       checkCuda_accfft(
           cufftExecC2R(plan->iplan_y,
             (cufftComplex*) &data_d[2 * i * osize_yi[1]
@@ -1462,7 +1463,7 @@ void accfft_execute_x_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d
 	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
 	int NY = plan->N[1];
 	float dummy_time = 0;
-  int64_t alloc_max = plan->alloc_max;
+  size_t alloc_max = plan->alloc_max;
 
 	int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
 	int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
@@ -1473,7 +1474,7 @@ void accfft_execute_x_gpuf(accfft_plan_gpuf* plan, int direction, float * data_d
   int *osize_yi = plan->osize_yi;
   int *osize_x = plan->osize_x;
   int *osize_xi = plan->osize_xi;
-  int64_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
+  size_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
   float* cwork_d = plan->Mem_mgr->buffer_d3;
 
 	if (direction == -1) {

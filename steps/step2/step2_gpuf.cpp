@@ -23,16 +23,20 @@ void step2_gpu(int *n) {
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 	/* Create Cartesian Communicator */
-	int c_dims[2];
+	int c_dims[2] = {nprocs,  1};
 	MPI_Comm c_comm;
 	accfft_create_comm(MPI_COMM_WORLD, c_dims, &c_comm);
 
 	float *data, *data_cpu;
 	Complexf *data_hat;
 	double f_time = 0 * MPI_Wtime(), i_time = 0, setup_time = 0;
-	int alloc_max = 0;
+	size_t alloc_max = 0;
 
 	int isize[3], osize[3], istart[3], ostart[3];
+  std::cout<<"isize osize istar ostart"<<std::endl;
+  for (int i = 0; i<3; i++)
+  std::cout<<isize[i]<<" "<<osize[i]<<" "<<istart[i]<<" "<<ostart[i]<<std::endl;
+  std::cout<<std::endl;
 	/* Get the local pencil size and the allocation size */
 	alloc_max = accfft_local_size_dft_r2c_gpuf(n, isize, istart, osize, ostart,
 			c_comm);
@@ -51,7 +55,9 @@ void step2_gpu(int *n) {
 
 	/* Warm Up */
 	accfft_execute_r2c_gpuf(plan, data, (Complexf*) data);
+  accfft_execute_c2r_gpuf(plan, (Complexf*) data, data);
 	accfft_execute_r2c_gpuf(plan, data, (Complexf*) data);
+  accfft_execute_c2r_gpuf(plan, (Complexf*) data, data);
 
 	/* Initialize data */
 	initialize_gpu(data, n, isize, istart);

@@ -33,14 +33,14 @@ void step1(int *n, int nthreads) {
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 	/* Create Cartesian Communicator */
-	int c_dims[2] = { 0 };
+	int c_dims[2] = {nprocs, 1};
 	MPI_Comm c_comm;
 	accfft_create_comm(MPI_COMM_WORLD, c_dims, &c_comm);
 
 	float *data;
 	Complexf *data_hat;
 	double f_time = 0 * MPI_Wtime(), i_time = 0, setup_time = 0;
-	int alloc_max = 0;
+	size_t alloc_max = 0;
 
 	int isize[3], osize[3], istart[3], ostart[3];
 	/* Get the local pencil size and the allocation size */

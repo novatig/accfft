@@ -25,7 +25,7 @@ void step1_gpu(int *n) {
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 	/* Create Cartesian Communicator */
-	int c_dims[2] = { 0 };
+	int c_dims[2] = {nprocs, 1};
 	MPI_Comm c_comm;
 	accfft_create_comm(MPI_COMM_WORLD, c_dims, &c_comm);
 

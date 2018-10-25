@@ -47,7 +47,7 @@
  * @return
  */
 
-int accfft_local_size_dft_r2cf(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_r2cf(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_r2c_t<float>(n, isize, istart, osize, ostart, c_comm);
 }
@@ -108,8 +108,8 @@ accfft_planf* accfft_plan_dft_3d_r2cf(int * n, float * data, float * data_out,
   int* osize_xi = plan->osize_xi;
   int* isize = plan->isize;
 
-	int alloc_local;
-	int alloc_max = 0;
+	size_t alloc_local;
+	size_t alloc_max = 0;
 	int n_tuples_o, n_tuples_i;
 	plan->inplace == true ? n_tuples_i = (n[2] / 2 + 1) * 2 : n_tuples_i = n[2];
 	n_tuples_o = (n[2] / 2 + 1) * 2;
@@ -473,7 +473,7 @@ accfft_planf* accfft_plan_dft_3d_r2c(int * n, float * data, float * data_out,
  * @param c_comm Cartesian communicator returned by \ref accfft_create_comm
  * @return
  */
-int accfft_local_size_dft_c2cf(int * n, int * isize, int * istart, int * osize,
+size_t accfft_local_size_dft_c2cf(int * n, int * isize, int * istart, int * osize,
 		int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_c2c_t<float>(n, isize, istart, osize, ostart, c_comm);
 }
@@ -531,7 +531,8 @@ accfft_planf* accfft_plan_dft_3d_c2cf(int * n, Complexf * data,
 	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
 
 	int alloc_local;
-	int alloc_max = 0, n_tuples = (n[2] / 2 + 1) * 2;
+	size_t alloc_max = 0;
+  int n_tuples = (n[2] / 2 + 1) * 2;
 
 	//int isize[3],osize[3],istart[3],ostart[3];
 	alloc_max = accfft_local_size_dft_c2cf(n, plan->isize, plan->istart,
@@ -1350,7 +1351,7 @@ void accfft_execute(accfft_plantf* plan, int direction, float * data,
       alpha.real = 1.0;
       alpha.imag = 0;
       timings[0] += -MPI_Wtime();
-      for(int i = 0; i < osize_1[0]; ++i)
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i)
         mkl_cimatcopy ('r', 't',  //const char ordering, const char trans,
                        osize_1[1], osize_1[2], //size_t rows, size_t cols,
                        alpha, (MKL_Complex8*)&data_out[2*i*osize_1[1]*osize_1[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
@@ -1363,7 +1364,7 @@ void accfft_execute(accfft_plantf* plan, int direction, float * data,
 		  fft_time += MPI_Wtime();
 
       timings[0] += -MPI_Wtime();
-      for(int i = 0; i < osize_1[0]; ++i)
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i)
         mkl_cimatcopy ('r', 't',  //const char ordering, const char trans,
                        osize_1[2], osize_1[1],//size_t rows, size_t cols,
                        alpha, (MKL_Complex8*)&data_out[2*i*(osize_1[1])*osize_1[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
@@ -1468,7 +1469,7 @@ void accfft_execute(accfft_plantf* plan, int direction, float * data,
       MKL_Complex8 alpha;
       alpha.real =1.0;
       alpha.imag = 0;
-      for(int i = 0; i < osize_1[0]; ++i){
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i){
         mkl_cimatcopy ('r','t',  //const char ordering, const char trans,
                        osize_1i[1], osize_1i[2],//size_t rows, size_t cols,
                        alpha, (MKL_Complex8*)&data[2*i*osize_1i[1]*osize_1i[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
@@ -1480,7 +1481,7 @@ void accfft_execute(accfft_plantf* plan, int direction, float * data,
 				(fftwf_complex*) data);
 		  fft_time += MPI_Wtime();
 
-      for(int i = 0; i < osize_1[0]; ++i)
+      for(size_t i = 0; i < (size_t) osize_1[0]; ++i)
         mkl_cimatcopy ('r','t',  //const char ordering, const char trans,
                        osize_1i[2], osize_1i[1],//size_t rows, size_t cols,
                        alpha, (MKL_Complex8*)&data[2*i*(osize_1i[1])*osize_1i[2]], //const MKL_Complex16 alpha, MKL_Complex16 * AB,
