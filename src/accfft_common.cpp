@@ -179,11 +179,11 @@ size_t accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osi
   ostart_xi[2] = -1<<8;
 
   size_t tmp = isize[0] * isize[1]*isize[2];
-  if (tmp > 2147483647){
-    std::cout << "! Integer overflow detected in AccFFT. Try running on more processors\n";
-    std::cerr << "! Integer overflow detected in AccFFT. Try running on more processors\n";
-    return -1;
-  }
+  //if (tmp > 2147483647){
+  //  std::cout << "! Integer overflow detected in AccFFT. Try running on more processors\n";
+  //  std::cerr << "! Integer overflow detected in AccFFT. Try running on more processors\n";
+  //  return -1;
+  //}
 
 	//isize[0]=osize_0[0];
 	//isize[1]=osize_0[1];

@@ -38,6 +38,16 @@
 #define VERBOSE 0
 #define PCOUT if(procid==0) std::cout
 typedef double Complex[2];
+//#define ALLPLANMANY
+
+inline void print_memUse(const std::string where) {
+  size_t free_byte, total_byte ;
+  //cudaSetDevice(0);
+  cudaMemGetInfo( &free_byte, &total_byte ) ;
+  double free_db=free_byte, total_db=total_byte, used_db=total_db-free_db;
+  printf("%s: used = %f, free = %f MB, total = %f MB\n", where.c_str(),
+    used_db/1024/1024, free_db/1024/1024, total_db/1024/1024); fflush(0);
+}
 
 /**
  * Cleanup all CPU resources
@@ -114,10 +124,8 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
   int* isize = plan->isize;
 
 	size_t alloc_max = 0;
-	int n_tuples_i, n_tuples_o;
-	//plan->inplace==true ? n_tuples=(n[2]/2+1)*2: n_tuples=n[2]*2;
-	plan->inplace == true ? n_tuples_i = (n[2] / 2 + 1) * 2 : n_tuples_i = n[2];
-	n_tuples_o = (n[2] / 2 + 1) * 2;
+	int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
+	int n_tuples_o = (n[2] / 2 + 1) * 2;
 
 	//int isize[3],osize[3],istart[3],ostart[3];
 	alloc_max = accfft_local_size_dft_r2c_gpu(n, plan->isize, plan->istart,
@@ -168,7 +176,7 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 	}
 
 	// fplan_0
-	int NX = n[0], NY = n[1], NZ = n[2];
+	//int NX = n[0], NY = n[1], NZ = n[2];
 	cufftResult_t cufft_error;
 	{
 		int f_inembed[1] = { n_tuples_i };
@@ -177,7 +185,11 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 		int odist = n_tuples_o / 2;
 		int istride = 1;
 		int ostride = 1;
-		int batch = osize_0[0] * osize_0[1]; //NX;
+    #ifndef ALLPLANMANY
+		int batch = osize_0[1];
+    #else
+		int batch = osize_0[0] * osize_0[1];
+    #endif
 
 		if (batch != 0) {
 			cufft_error = cufftPlanMany(&plan->fplan_0, 1, &n[2], f_inembed,
@@ -206,8 +218,8 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 	}
 	// fplan_1
 	{
-		int f_inembed[1] = { NY };
-		int f_onembed[1] = { NY };
+		int f_inembed[1] = { n[1] };
+		int f_onembed[1] = { n[1] };
 		int idist = 1;
 		int odist = 1;
 		int istride = osize_1[2];
@@ -229,14 +241,17 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 	}
 	// fplan_2
 	{
-		int f_inembed[1] = { NX };
-		int f_onembed[1] = { NX };
+		int f_inembed[1] = { n[0] };
+		int f_onembed[1] = { n[0] };
 		int idist = 1;
 		int odist = 1;
 		int istride = osize_2[1] * osize_2[2];
 		int ostride = osize_2[1] * osize_2[2];
+    #ifndef ALLPLANMANY
+		int batch = osize_2[2];
+    #else
 		int batch = osize_2[1] * osize_2[2];
-		;
+    #endif
 
 		if (batch != 0) {
 			cufft_error = cufftPlanMany(&plan->fplan_2, 1, &n[0], f_inembed,
@@ -253,8 +268,8 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 	}
 	// fplan_y
 	{
-		int f_inembed[1] = { NY };
-		int f_onembed[1] = { NY / 2 + 1 };
+		int f_inembed[1] = { n[1] };
+		int f_onembed[1] = { n[1] / 2 + 1 };
 		int idist = 1;
 		int odist = 1;
 		int istride = osize_y[2];
@@ -287,6 +302,7 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 		}
 	}
   // fplan_x
+  if(0)
 	{
 		int f_inembed[1] = { n[0] };
 		int f_onembed[1] = { n[0] / 2 + 1 };
@@ -324,12 +340,11 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
 
 	// 1D Decomposition
 	if (plan->oneD) {
-		int N0 = n[0], N1 = n[1], N2 = n[2];
 
-		plan->Mem_mgr = new Mem_Mgr_gpu<double>(N0, N1, n_tuples_o, c_comm, 1, plan->alloc_max);
-		plan->T_plan_2 = new T_Plan_gpu<double>(N0, N1, n_tuples_o,
+		plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[0], n[1], n_tuples_o, c_comm, 1, plan->alloc_max);
+		plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], n_tuples_o,
 				plan->Mem_mgr, c_comm);
-		plan->T_plan_2i = new T_Plan_gpu<double>(N1, N0, n_tuples_o,
+		plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], n_tuples_o,
 				plan->Mem_mgr, c_comm);
 		plan->T_plan_1 = NULL;
 		plan->T_plan_1i = NULL;
@@ -460,12 +475,13 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
 	checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
 	checkCuda_accfft(cudaEventCreate(&fft_startEvent));
 	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
-	int NY = plan->N[1];
+	//int NY = plan->N[1];
+  const int n[3] = {plan->N[0], plan->N[1], plan->N[2]};
 	float dummy_time = 0;
 
 	int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
 	int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
-	//int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
+	int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
 	int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
 	//int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
 
@@ -476,9 +492,21 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
 		// FFT in Z direction
 		if (xyz[2]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			checkCuda_accfft(
-					cufftExecD2Z(plan->fplan_0, (cufftDoubleReal*) data_d,
-							(cufftDoubleComplex*) data_out_d));
+      #ifndef ALLPLANMANY
+      int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
+    	int n_tuples_o = (n[2] / 2 + 1) * 2;
+      for (size_t i = 0; i < (size_t) osize_0[0]; ++i) {
+				checkCuda_accfft(
+						cufftExecD2Z(plan->fplan_0,
+							(cufftDoubleReal*) &data_d[i *osize_0[1] *n_tuples_i ],
+								(cufftDoubleComplex*) &data_out_d[i *osize_0[1] *n_tuples_o ]));
+			}
+      #else
+      checkCuda_accfft(
+            cufftExecD2Z(plan->fplan_0, (cufftDoubleReal*) data_d,
+            (cufftDoubleComplex*) data_out_d));
+      #endif
+
 			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
 			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
 			checkCuda_accfft(
@@ -526,10 +554,19 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
 		/**************************************************************/
 		if (xyz[0]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      #ifndef ALLPLANMANY
+      for (size_t i = 0; i < (size_t) osize_2[1]; ++i) {
+				checkCuda_accfft(
+						cufftExecZ2Z(plan->fplan_2,
+								(cufftDoubleComplex*) &data_out_d[2 *i *osize_2[2]],
+								(cufftDoubleComplex*) &data_out_d[2 *i *osize_2[2]], CUFFT_FORWARD));
+			}
+      #else
 			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_2,
-							(cufftDoubleComplex*) data_out_d,
+					cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_out_d,
 							(cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
+      #endif
+
 			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
 			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
 			checkCuda_accfft(
@@ -540,9 +577,19 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
 	} else if (direction == 1) {
 		if (xyz[0]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      #ifndef ALLPLANMANY
+      for (size_t i = 0; i < (size_t) osize_2[1]; ++i) {
+				checkCuda_accfft(
+						cufftExecZ2Z(plan->fplan_2,
+								(cufftDoubleComplex*) &data_d[2 *i *osize_2[2]],
+								(cufftDoubleComplex*) &data_d[2 *i *osize_2[2]], CUFFT_INVERSE));
+			}
+      #else
 			checkCuda_accfft(
 					cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_d,
 							(cufftDoubleComplex*) data_d, CUFFT_INVERSE));
+      #endif
+
 			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
 			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
 			checkCuda_accfft(
@@ -565,9 +612,9 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
 			for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
 				checkCuda_accfft(
 						cufftExecZ2Z(plan->fplan_1,
-								(cufftDoubleComplex*) &data_d[2 * i * NY
+								(cufftDoubleComplex*) &data_d[2 * i * n[1]
 										* osize_1i[2]],
-								(cufftDoubleComplex*) &data_d[2 * i * NY
+								(cufftDoubleComplex*) &data_d[2 * i * n[1]
 										* osize_1i[2]], CUFFT_INVERSE));
 			}
 			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
@@ -589,9 +636,21 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
 		// IFFT in Z direction
 		if (xyz[2]) {
 			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			checkCuda_accfft(
+      #ifndef ALLPLANMANY
+      int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
+      int n_tuples_o = (n[2] / 2 + 1) * 2;
+      for (size_t i = 0; i < (size_t) osize_0[0]; ++i) {
+				checkCuda_accfft(
+						cufftExecZ2D(plan->iplan_0,
+              (cufftDoubleComplex*) &data_d[ i * osize_0[1] * n_tuples_o ],
+							(cufftDoubleReal*) &data_out_d[ i * osize_0[1]	* n_tuples_i ]));
+			}
+      #else
+      checkCuda_accfft(
 					cufftExecZ2D(plan->iplan_0, (cufftDoubleComplex*) data_d,
 							(cufftDoubleReal*) data_out_d));
+      #endif
+
 			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
 			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
 			checkCuda_accfft(

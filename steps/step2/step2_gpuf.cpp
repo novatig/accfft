@@ -33,13 +33,14 @@ void step2_gpu(int *n) {
 	size_t alloc_max = 0;
 
 	int isize[3], osize[3], istart[3], ostart[3];
-  std::cout<<"isize osize istar ostart"<<std::endl;
-  for (int i = 0; i<3; i++)
-  std::cout<<isize[i]<<" "<<osize[i]<<" "<<istart[i]<<" "<<ostart[i]<<std::endl;
-  std::cout<<std::endl;
 	/* Get the local pencil size and the allocation size */
 	alloc_max = accfft_local_size_dft_r2c_gpuf(n, isize, istart, osize, ostart,
 			c_comm);
+
+        std::cout<<"isize osize istar ostart"<<std::endl;
+        for (int i = 0; i<3; i++)
+        std::cout<<isize[i]<<" "<<osize[i]<<" "<<istart[i]<<" "<<ostart[i]<<std::endl;
+        std::cout<<std::endl;
 
 	/* Note that both need to be allocated by alloc_max because of inplace transform*/
 	data_cpu = (float*) malloc(alloc_max);
