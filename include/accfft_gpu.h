@@ -35,124 +35,124 @@
 #include "accfft_common.h"
 
 struct accfft_plan_gpu {
-	int N[3];
-	size_t alloc_max;
-	Mem_Mgr_gpu<double> * Mem_mgr;
-	T_Plan_gpu<double> * T_plan_1;
-	T_Plan_gpu<double> * T_plan_2;
-	T_Plan_gpu<double> * T_plan_2i;
-	T_Plan_gpu<double> * T_plan_1i;
-	T_Plan_gpu<double> * T_plan_y;
-	T_Plan_gpu<double> * T_plan_yi;
-	T_Plan_gpu<double> * T_plan_x;
-	T_Plan_gpu<double> * T_plan_xi;
-	cufftHandle fplan_0, iplan_0, fplan_1, iplan_1, fplan_2, iplan_2;
+  int N[3];
+  size_t alloc_max;
+  Mem_Mgr_gpu<double> * Mem_mgr;
+  T_Plan_gpu<double> * T_plan_1;
+  T_Plan_gpu<double> * T_plan_2;
+  T_Plan_gpu<double> * T_plan_2i;
+  T_Plan_gpu<double> * T_plan_1i;
+  T_Plan_gpu<double> * T_plan_y;
+  T_Plan_gpu<double> * T_plan_yi;
+  T_Plan_gpu<double> * T_plan_x;
+  T_Plan_gpu<double> * T_plan_xi;
+  cufftHandle fplan_0, iplan_0, fplan_1, iplan_1, fplan_2, iplan_2;
   cufftHandle fplan_y, fplan_x, iplan_y, iplan_x;
-	int coord[2], np[2], periods[2];
-	MPI_Comm c_comm, row_comm, col_comm;
+  int coord[2], np[2], periods[2];
+  MPI_Comm c_comm, row_comm, col_comm;
 
-	int osize_0[3], ostart_0[3];
-	int osize_1[3], ostart_1[3];
-	int osize_2[3], ostart_2[3];
-	int osize_1i[3], ostart_1i[3];
-	int osize_2i[3], ostart_2i[3];
-	int isize[3], istart[3];
-	int osize[3], ostart[3];
+  int osize_0[3], ostart_0[3];
+  int osize_1[3], ostart_1[3];
+  int osize_2[3], ostart_2[3];
+  int osize_1i[3], ostart_1i[3];
+  int osize_2i[3], ostart_2i[3];
+  int isize[3], istart[3];
+  int osize[3], ostart[3];
   int osize_y[3], osize_yi[3], ostart_y[3];
   int osize_x[3], osize_xi[3], ostart_x[3];
 
-	double * data;
-	double * data_out;
-	Complex * data_c;
-	Complex * data_out_c;
-	int procid;
-	bool inplace;
-	bool oneD;
-	bool r2c_plan_baked;
-	bool c2c_plan_baked;
+  double * data;
+  double * data_out;
+  Complex * data_c;
+  Complex * data_out_c;
+  int procid;
+  bool inplace;
+  bool oneD;
+  bool r2c_plan_baked;
+  bool c2c_plan_baked;
 
-	accfft_plan_gpu() {
-		r2c_plan_baked = 0;
-		c2c_plan_baked = 0;
-		data = NULL;
-		data_out = NULL;
-		T_plan_1 = NULL;
-		T_plan_1i = NULL;
-		T_plan_2 = NULL;
-		T_plan_2i = NULL;
-		T_plan_y = NULL;
-		T_plan_yi = NULL;
-		T_plan_x = NULL;
-		T_plan_xi = NULL;
-		Mem_mgr = NULL;
+  accfft_plan_gpu() {
+    r2c_plan_baked = 0;
+    c2c_plan_baked = 0;
+    data = NULL;
+    data_out = NULL;
+    T_plan_1 = NULL;
+    T_plan_1i = NULL;
+    T_plan_2 = NULL;
+    T_plan_2i = NULL;
+    T_plan_y = NULL;
+    T_plan_yi = NULL;
+    T_plan_x = NULL;
+    T_plan_xi = NULL;
+    Mem_mgr = NULL;
     fplan_y = -1;
     fplan_x = -1;
     iplan_y = -1;
     iplan_x = -1;
-	}
-	;
+  }
+  ;
 
 };
 
 size_t dfft_get_local_size_gpu(int N0, int N1, int N2, int * isize, int * istart,
-		MPI_Comm c_comm);
+    MPI_Comm c_comm);
 size_t accfft_local_size_dft_r2c_gpu(int * n, int * isize, int * istart,
-		int * osize, int *ostart, MPI_Comm c_comm);
+    int * osize, int *ostart, MPI_Comm c_comm);
 
 accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
-		double * data_out_d, MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
+    double * data_out_d, MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
 
 size_t accfft_local_size_dft_c2c_gpu(int * n, int * isize, int * istart,
-		int * osize, int *ostart, MPI_Comm c_comm);
+    int * osize, int *ostart, MPI_Comm c_comm);
 
 accfft_plan_gpu* accfft_plan_dft_3d_c2c_gpu(int * n, Complex * data_d,
-		Complex * data_out_d, MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
+    Complex * data_out_d, MPI_Comm c_comm, unsigned flags = ACCFFT_MEASURE);
 
 void accfft_destroy_plan(accfft_plan_gpu * plan);
 void accfft_destroy_plan_gpu(accfft_plan_gpu * plan);
 void accfft_execute_r2c_gpu(accfft_plan_gpu* plan, double * data,
-		Complex * data_out, double * timer = NULL, std::bitset<3> xyz = 111);
+    Complex * data_out, double * timer = NULL, std::bitset<3> xyz = 111);
 void accfft_execute_c2r_gpu(accfft_plan_gpu* plan, Complex * data,
-		double * data_out, double * timer = NULL, std::bitset<3> xyz = 111);
+    double * data_out, double * timer = NULL, std::bitset<3> xyz = 111);
 void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
-		double * data_out_d, double * timer = NULL, std::bitset<3> xyz = 111);
+    double * data_out_d, double * timer = NULL, std::bitset<3> xyz = 111);
 void accfft_execute_c2c_gpu(accfft_plan_gpu* plan, int direction,
-		Complex * data_d, Complex * data_out_d, double * timer = NULL,
-		std::bitset<3> xyz = 111);
+    Complex * data_d, Complex * data_out_d, double * timer = NULL,
+    std::bitset<3> xyz = 111);
 void accfft_cleanup_gpu();
 
 template<typename T, typename Tc>
 void accfft_execute_r2c_gpu_t(accfft_plan_gpu* plan, T* data, Tc* data_out,
-		double * timer = NULL, std::bitset<3> XYZ = 111);
+    double * timer = NULL, std::bitset<3> XYZ = 111);
 template<typename Tc, typename T>
 void accfft_execute_c2r_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
-		double * timer = NULL, std::bitset<3> XYZ = 111);
+    double * timer = NULL, std::bitset<3> XYZ = 111);
 
 template<typename T>
 size_t accfft_local_size_dft_r2c_gpu_t(int * n, int * isize, int * istart,
-		int * osize, int *ostart, MPI_Comm c_comm);
+    int * osize, int *ostart, MPI_Comm c_comm);
 
 // templates for execution in z direction only
 template<typename T, typename Tc>
 void accfft_execute_r2c_z_gpu_t(accfft_plan_gpu* plan, T* data, Tc* data_out,
-		double * timer = NULL);
+    double * timer = NULL);
 template<typename Tc, typename T>
 void accfft_execute_c2r_z_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
-		double * timer = NULL);
+    double * timer = NULL);
 // templates for execution in y direction only
 template<typename T, typename Tc>
 void accfft_execute_r2c_y_gpu_t(accfft_plan_gpu* plan, T* data, Tc* data_out,
-		double * timer = NULL);
+    double * timer = NULL);
 template<typename Tc, typename T>
 void accfft_execute_c2r_y_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
-		double * timer = NULL);
+    double * timer = NULL);
 // templates for execution in x direction only
 template<typename T, typename Tc>
 void accfft_execute_r2c_x_gpu_t(accfft_plan_gpu* plan, T* data, Tc* data_out,
-		double * timer = NULL);
+    double * timer = NULL);
 template<typename Tc, typename T>
 void accfft_execute_c2r_x_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
-		double * timer = NULL);
+    double * timer = NULL);
 
 #endif
 
@@ -160,20 +160,20 @@ void accfft_execute_c2r_x_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
 #define ACCFFT_CHECKCUDA_H
 inline cudaError_t checkCuda_accfft(cudaError_t result) {
 #if defined(DEBUG) || defined(_DEBUG)
-	if (result != cudaSuccess) {
-		fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-		assert(result == cudaSuccess);
-	}
+  if (result != cudaSuccess) {
+    fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+    assert(result == cudaSuccess);
+  }
 #endif
-	return result;
+  return result;
 }
 inline cufftResult checkCuda_accfft(cufftResult result) {
 #if defined(DEBUG) || defined(_DEBUG)
-	if (result != CUFFT_SUCCESS) {
-		fprintf(stderr, "CUDA Runtime Error: %s\n", result);
-		assert(result == CUFFT_SUCCESS);
-	}
+  if (result != CUFFT_SUCCESS) {
+    fprintf(stderr, "CUDA Runtime Error: %s\n", result);
+    assert(result == CUFFT_SUCCESS);
+  }
 #endif
-	return result;
+  return result;
 }
 #endif

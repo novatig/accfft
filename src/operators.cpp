@@ -33,76 +33,76 @@
 
 
 template void grad_mult_wave_numberx<Complex>(Complex* wA, Complex* A, int* N,
-		MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
+    MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
 template void grad_mult_wave_numberx_inplace<Complex>(Complex* A, int* N,
-		MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
+    MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
 template void grad_mult_wave_numbery<Complex>(Complex* wA, Complex* A, int* N,
-		MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
+    MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
 template void grad_mult_wave_numbery_inplace<Complex>(Complex* A, int* N,
-		MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
+    MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
 template void grad_mult_wave_numberz<Complex>(Complex* wA, Complex* A, int* N,
-		MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
+    MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
 template void grad_mult_wave_numberz_inplace<Complex>(Complex* A, int* N,
-		MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
+    MPI_Comm c_comm, int* size, int* start, std::bitset<3> xyz);
 template void grad_mult_wave_number_laplace<Complex>(Complex* wA, Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void grad_mult_wave_number_laplace_inplace<Complex>(Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void biharmonic_mult_wave_number<Complex>(Complex* wA, Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void biharmonic_mult_wave_number_inplace<Complex>(Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void mult_wave_number_inv_laplace<Complex>(Complex* wA, Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void mult_wave_number_inv_laplace_inplace<Complex>(Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void mult_wave_number_inv_biharmonic<Complex>(Complex* wA, Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 template void mult_wave_number_inv_biharmonic_inplace<Complex>(Complex* A,
-		int* N, MPI_Comm c_comm);
+    int* N, MPI_Comm c_comm);
 
 template void accfft_grad_slow_t<double, accfft_plan>(double * A_x, double *A_y,
-		double *A_z, double *A, accfft_plan *plan, std::bitset<3>* pXYZ,
-		double* timer);
+    double *A_z, double *A, accfft_plan *plan, std::bitset<3>* pXYZ,
+    double* timer);
 template void accfft_grad_t<double, accfft_plan>(double * A_x, double *A_y,
-		double *A_z, double *A, accfft_plan *plan, std::bitset<3>* pXYZ,
-		double* timer);
+    double *A_z, double *A, accfft_plan *plan, std::bitset<3>* pXYZ,
+    double* timer);
 template void accfft_laplace_t<double, accfft_plan>(double * LA, double *A,
-		accfft_plan *plan, double* timer);
+    accfft_plan *plan, double* timer);
 template void accfft_biharmonic_t<double, accfft_plan>(double * LA, double *A,
-		accfft_plan *plan, double* timer);
+    accfft_plan *plan, double* timer);
 template void accfft_divergence_slow_t<double, accfft_plan>(double* divA,
-		double * A_x, double *A_y, double *A_z, accfft_plan *plan,
-		double* timer);
+    double * A_x, double *A_y, double *A_z, accfft_plan *plan,
+    double* timer);
 template void accfft_divergence_t<double, accfft_plan>(double* divA,
-		double * A_x, double *A_y, double *A_z, accfft_plan *plan,
-		double* timer);
+    double * A_x, double *A_y, double *A_z, accfft_plan *plan,
+    double* timer);
 template void accfft_inv_laplace_t<double, accfft_plan>(double * invLA,
-		double *A, accfft_plan *plan, double* timer);
+    double *A, accfft_plan *plan, double* timer);
 template void accfft_inv_biharmonic_t<double, accfft_plan>(double * invBA,
-		double *A, accfft_plan *plan, double* timer);
+    double *A, accfft_plan *plan, double* timer);
 
 template void accfft_grad_slow_t<double, accfft_plantd>(double * A_x, double *A_y,
-		double *A_z, double *A, accfft_plantd *plan, std::bitset<3>* pXYZ,
-		double* timer);
+    double *A_z, double *A, accfft_plantd *plan, std::bitset<3>* pXYZ,
+    double* timer);
 
 template void accfft_grad_t<double, accfft_plantd>(double * A_x, double *A_y,
-		double *A_z, double *A, accfft_plantd *plan, std::bitset<3>* pXYZ,
-		double* timer);
+    double *A_z, double *A, accfft_plantd *plan, std::bitset<3>* pXYZ,
+    double* timer);
 template void accfft_divergence_t<double, accfft_plantd>(double* divA,
-		double * A_x, double *A_y, double *A_z, accfft_plantd *plan,
-		double* timer);
+    double * A_x, double *A_y, double *A_z, accfft_plantd *plan,
+    double* timer);
 template void accfft_laplace_t<double, accfft_plantd>(double * LA, double *A,
-		accfft_plantd *plan, double* timer);
+    accfft_plantd *plan, double* timer);
 template void accfft_biharmonic_t<double, accfft_plantd>(double * LA, double *A,
-		accfft_plantd *plan, double* timer);
+    accfft_plantd *plan, double* timer);
 template void accfft_divergence_slow_t<double, accfft_plantd>(double* divA,
-		double * A_x, double *A_y, double *A_z, accfft_plantd *plan,
-		double* timer);
+    double * A_x, double *A_y, double *A_z, accfft_plantd *plan,
+    double* timer);
 template void accfft_inv_laplace_t<double, accfft_plantd>(double * invLA,
-		double *A, accfft_plantd *plan, double* timer);
+    double *A, accfft_plantd *plan, double* timer);
 template void accfft_inv_biharmonic_t<double, accfft_plantd>(double * invBA,
-		double *A, accfft_plantd *plan, double* timer);
+    double *A, accfft_plantd *plan, double* timer);
 
 /**
  * Computes double precision gradient of its input real data A, and returns the x, y, and z components
@@ -118,8 +118,8 @@ template void accfft_inv_biharmonic_t<double, accfft_plantd>(double * invBA,
  * @param timer See \ref timer for more details.
  */
 void accfft_grad(double * A_x, double *A_y, double *A_z, double *A,
-		accfft_plan *plan, std::bitset<3>* pXYZ, double* timer) {
-	accfft_grad_t<double, accfft_plan>(A_x, A_y, A_z, A, plan, pXYZ, timer);
+    accfft_plan *plan, std::bitset<3>* pXYZ, double* timer) {
+  accfft_grad_t<double, accfft_plan>(A_x, A_y, A_z, A, plan, pXYZ, timer);
 }
 
 /**
@@ -131,7 +131,7 @@ void accfft_grad(double * A_x, double *A_y, double *A_z, double *A,
  * @param timer See \ref timer for more details.
  */
 void accfft_laplace(double * LA, double *A, accfft_plan *plan, double* timer) {
-	accfft_laplace_t<double, accfft_plan>(LA, A, plan, timer);
+  accfft_laplace_t<double, accfft_plan>(LA, A, plan, timer);
 }
 
 /**
@@ -146,8 +146,8 @@ void accfft_laplace(double * LA, double *A, accfft_plan *plan, double* timer) {
  * @param timer See \ref timer for more details.
  */
 void accfft_divergence(double* divA, double * A_x, double *A_y, double *A_z,
-		accfft_plan *plan, double* timer) {
-	accfft_divergence_t<double, accfft_plan>(divA, A_x, A_y, A_z, plan, timer);
+    accfft_plan *plan, double* timer) {
+  accfft_divergence_t<double, accfft_plan>(divA, A_x, A_y, A_z, plan, timer);
 }
 
 /**
@@ -159,8 +159,8 @@ void accfft_divergence(double* divA, double * A_x, double *A_y, double *A_z,
  * @param timer See \ref timer for more details.
  */
 void accfft_biharmonic(double * BA, double *A, accfft_plan *plan,
-		double* timer) {
-	accfft_biharmonic_t<double, accfft_plan>(BA, A, plan, timer);
+    double* timer) {
+  accfft_biharmonic_t<double, accfft_plan>(BA, A, plan, timer);
 }
 
 /**
@@ -172,8 +172,8 @@ void accfft_biharmonic(double * BA, double *A, accfft_plan *plan,
  * @param timer See \ref timer for more details.
  */
 void accfft_inv_laplace(double * invLA, double *A, accfft_plan *plan,
-		double* timer) {
-	accfft_inv_laplace_t<double, accfft_plan>(invLA, A, plan, timer);
+    double* timer) {
+  accfft_inv_laplace_t<double, accfft_plan>(invLA, A, plan, timer);
 }
 
 /**
@@ -185,8 +185,8 @@ void accfft_inv_laplace(double * invLA, double *A, accfft_plan *plan,
  * @param timer See \ref timer for more details.
  */
 void accfft_inv_biharmonic(double * invBA, double *A, accfft_plan *plan,
-		double* timer) {
-	accfft_inv_biharmonic_t<double, accfft_plan>(invBA, A, plan, timer);
+    double* timer) {
+  accfft_inv_biharmonic_t<double, accfft_plan>(invBA, A, plan, timer);
 }
 
 #ifdef USE_PNETCDF
@@ -196,16 +196,16 @@ void accfft_inv_biharmonic(double * invBA, double *A, accfft_plan *plan,
 #include <string>
 #include <iostream>
 
-#define PNETCDF_HANDLE_ERROR {				      \
-    if (err != NC_NOERR)				      \
+#define PNETCDF_HANDLE_ERROR {              \
+    if (err != NC_NOERR)              \
       printf("PNetCDF Error at line %d (%s)\n", __LINE__,     \
-	     ncmpi_strerror(err));			      \
+       ncmpi_strerror(err));            \
 }
 
 enum ComponentIndex3D {
-	IX = 0,
-	IY = 1,
-	IZ = 2
+  IX = 0,
+  IY = 1,
+  IZ = 2
 };
 
 /**
@@ -225,98 +225,98 @@ enum ComponentIndex3D {
  * localData must have been allocated prior to calling this routine.
  */
 void read_pnetcdf(const std::string &filename,
-		MPI_Offset starts[3],
-		MPI_Offset counts[3],
-		MPI_Comm c_comm,
-		int gsizes[3],
-		double *localData)
+    MPI_Offset starts[3],
+    MPI_Offset counts[3],
+    MPI_Comm c_comm,
+    int gsizes[3],
+    double *localData)
 {
 
-	int myRank;
-	MPI_Comm_rank(c_comm, &myRank);
+  int myRank;
+  MPI_Comm_rank(c_comm, &myRank);
 
-	// netcdf file id
-	int ncFileId;
-	int err;
+  // netcdf file id
+  int ncFileId;
+  int err;
 
-	// file opening mode
-	int ncOpenMode = NC_NOWRITE;
+  // file opening mode
+  int ncOpenMode = NC_NOWRITE;
 
-	int nbVar=1;
-	int varIds[nbVar];
-	MPI_Info mpi_info_used;
+  int nbVar=1;
+  int varIds[nbVar];
+  MPI_Info mpi_info_used;
 
-	/*
-	 * Open NetCDF file
-	 */
-	err = ncmpi_open(c_comm, filename.c_str(),
-			ncOpenMode,
-			MPI_INFO_NULL, &ncFileId);
-	if (err != NC_NOERR) {
-		printf("Error: ncmpi_open() file %s (%s)\n",filename.c_str(),ncmpi_strerror(err));
-		MPI_Abort(MPI_COMM_WORLD, -1);
-		exit(1);
-	}
+  /*
+   * Open NetCDF file
+   */
+  err = ncmpi_open(c_comm, filename.c_str(),
+      ncOpenMode,
+      MPI_INFO_NULL, &ncFileId);
+  if (err != NC_NOERR) {
+    printf("Error: ncmpi_open() file %s (%s)\n",filename.c_str(),ncmpi_strerror(err));
+    MPI_Abort(MPI_COMM_WORLD, -1);
+    exit(1);
+  }
 
-	/*
-	 * Query NetCDF mode
-	 */
-	int NC_mode;
-	err = ncmpi_inq_version(ncFileId, &NC_mode);
-	// if (myRank==0) {
-	//	if (NC_mode == NC_64BIT_DATA)
-	//	std::cout << "Pnetcdf Input mode : NC_64BIT_DATA (CDF-5)\n";
-	//	else if (NC_mode == NC_64BIT_OFFSET)
-	//	std::cout << "Pnetcdf Input mode : NC_64BIT_OFFSET (CDF-2)\n";
-	//	else
-	//	std::cout << "Pnetcdf Input mode : unknown " << NC_mode << std::endl;
-	// }
+  /*
+   * Query NetCDF mode
+   */
+  int NC_mode;
+  err = ncmpi_inq_version(ncFileId, &NC_mode);
+  // if (myRank==0) {
+  //  if (NC_mode == NC_64BIT_DATA)
+  //  std::cout << "Pnetcdf Input mode : NC_64BIT_DATA (CDF-5)\n";
+  //  else if (NC_mode == NC_64BIT_OFFSET)
+  //  std::cout << "Pnetcdf Input mode : NC_64BIT_OFFSET (CDF-2)\n";
+  //  else
+  //  std::cout << "Pnetcdf Input mode : unknown " << NC_mode << std::endl;
+  // }
 
-	/*
-	 * Query information about variable named "data"
-	 */
-	{
-		int ndims, nvars, ngatts, unlimited;
-		err = ncmpi_inq(ncFileId, &ndims, &nvars, &ngatts, &unlimited);
-		PNETCDF_HANDLE_ERROR;
+  /*
+   * Query information about variable named "data"
+   */
+  {
+    int ndims, nvars, ngatts, unlimited;
+    err = ncmpi_inq(ncFileId, &ndims, &nvars, &ngatts, &unlimited);
+    PNETCDF_HANDLE_ERROR;
 
-		err = ncmpi_inq_varid(ncFileId, "data", &varIds[0]);
-		PNETCDF_HANDLE_ERROR;
-	}
+    err = ncmpi_inq_varid(ncFileId, "data", &varIds[0]);
+    PNETCDF_HANDLE_ERROR;
+  }
 
-	/*
-	 * Define expected data types (no conversion done here)
-	 */
-	MPI_Datatype mpiDataType = MPI_DOUBLE;
+  /*
+   * Define expected data types (no conversion done here)
+   */
+  MPI_Datatype mpiDataType = MPI_DOUBLE;
 
-	/*
-	 * Get all the MPI_IO hints used (just in case, we want to print it after
-	 * reading data...
-	 */
-	err = ncmpi_get_file_info(ncFileId, &mpi_info_used);
-	PNETCDF_HANDLE_ERROR;
+  /*
+   * Get all the MPI_IO hints used (just in case, we want to print it after
+   * reading data...
+   */
+  err = ncmpi_get_file_info(ncFileId, &mpi_info_used);
+  PNETCDF_HANDLE_ERROR;
 
-	/*
-	 * Read heavy data (take care of row-major / column major format !)
-	 */
-	int nItems = counts[IX]*counts[IY]*counts[IZ];
-	{
+  /*
+   * Read heavy data (take care of row-major / column major format !)
+   */
+  int nItems = counts[IX]*counts[IY]*counts[IZ];
+  {
 
-		err = ncmpi_get_vara_all(ncFileId,
-				varIds[0],
-				starts,
-				counts,
-				localData,
-				nItems,
-				mpiDataType);
-		PNETCDF_HANDLE_ERROR;
-	} // end reading heavy data
+    err = ncmpi_get_vara_all(ncFileId,
+        varIds[0],
+        starts,
+        counts,
+        localData,
+        nItems,
+        mpiDataType);
+    PNETCDF_HANDLE_ERROR;
+  } // end reading heavy data
 
-	/*
-	 * close the file
-	 */
-	err = ncmpi_close(ncFileId);
-	PNETCDF_HANDLE_ERROR;
+  /*
+   * close the file
+   */
+  err = ncmpi_close(ncFileId);
+  PNETCDF_HANDLE_ERROR;
 
 } // read_pnetcdf
 
@@ -336,136 +336,136 @@ void read_pnetcdf(const std::string &filename,
  *
  */
 void write_pnetcdf(const std::string &filename,
-		MPI_Offset starts[3],
-		MPI_Offset counts[3],
-		MPI_Comm c_comm,
-		int gsizes[3],
-		double *localData)
+    MPI_Offset starts[3],
+    MPI_Offset counts[3],
+    MPI_Comm c_comm,
+    int gsizes[3],
+    double *localData)
 {
-	int myRank;
-	MPI_Comm_rank(c_comm, &myRank);
+  int myRank;
+  MPI_Comm_rank(c_comm, &myRank);
 
-	// netcdf file id
-	int ncFileId;
-	int err;
+  // netcdf file id
+  int ncFileId;
+  int err;
 
-	// file creation mode
-	int ncCreationMode = NC_CLOBBER;
+  // file creation mode
+  int ncCreationMode = NC_CLOBBER;
 
-	// CDF-5 is almost mandatory for very large files (>= 2x10^9 cells)
-	// not useful here
-	bool useCDF5 = false;
-	if (useCDF5)
-	ncCreationMode = NC_CLOBBER|NC_64BIT_DATA;
-	else// use CDF-2 file format
-	ncCreationMode = NC_CLOBBER|NC_64BIT_OFFSET;
+  // CDF-5 is almost mandatory for very large files (>= 2x10^9 cells)
+  // not useful here
+  bool useCDF5 = false;
+  if (useCDF5)
+  ncCreationMode = NC_CLOBBER|NC_64BIT_DATA;
+  else// use CDF-2 file format
+  ncCreationMode = NC_CLOBBER|NC_64BIT_OFFSET;
 
-	// verbose log ?
-	//bool pnetcdf_verbose = false;
+  // verbose log ?
+  //bool pnetcdf_verbose = false;
 
-	int nbVar=1;
-	int dimIds[3], varIds[nbVar];
-	//MPI_Offset write_size, sum_write_size;
-	MPI_Info mpi_info_used;
-	//char str[512];
+  int nbVar=1;
+  int dimIds[3], varIds[nbVar];
+  //MPI_Offset write_size, sum_write_size;
+  MPI_Info mpi_info_used;
+  //char str[512];
 
-	// time measurement variables
-	//double write_timing, max_write_timing, write_bw;
+  // time measurement variables
+  //double write_timing, max_write_timing, write_bw;
 
-	/*
-	 * Create NetCDF file
-	 */
-	err = ncmpi_create(c_comm, filename.c_str(),
-			ncCreationMode,
-			MPI_INFO_NULL, &ncFileId);
-	if (err != NC_NOERR) {
-		printf("Error: ncmpi_create() file %s (%s)\n",filename.c_str(),ncmpi_strerror(err));
-		MPI_Abort(MPI_COMM_WORLD, -1);
-		exit(1);
-	}
+  /*
+   * Create NetCDF file
+   */
+  err = ncmpi_create(c_comm, filename.c_str(),
+      ncCreationMode,
+      MPI_INFO_NULL, &ncFileId);
+  if (err != NC_NOERR) {
+    printf("Error: ncmpi_create() file %s (%s)\n",filename.c_str(),ncmpi_strerror(err));
+    MPI_Abort(MPI_COMM_WORLD, -1);
+    exit(1);
+  }
 
-	/*
-	 * Define global dimensions
-	 */
-	err = ncmpi_def_dim(ncFileId, "x", gsizes[0], &dimIds[0]);
-	PNETCDF_HANDLE_ERROR;
+  /*
+   * Define global dimensions
+   */
+  err = ncmpi_def_dim(ncFileId, "x", gsizes[0], &dimIds[0]);
+  PNETCDF_HANDLE_ERROR;
 
-	err = ncmpi_def_dim(ncFileId, "y", gsizes[1], &dimIds[1]);
-	PNETCDF_HANDLE_ERROR;
+  err = ncmpi_def_dim(ncFileId, "y", gsizes[1], &dimIds[1]);
+  PNETCDF_HANDLE_ERROR;
 
-	err = ncmpi_def_dim(ncFileId, "z", gsizes[2], &dimIds[2]);
-	PNETCDF_HANDLE_ERROR;
+  err = ncmpi_def_dim(ncFileId, "z", gsizes[2], &dimIds[2]);
+  PNETCDF_HANDLE_ERROR;
 
-	/*
-	 * Define variables to write (give a name)
-	 */
-	nc_type ncDataType = NC_DOUBLE;
-	MPI_Datatype mpiDataType = MPI_DOUBLE;
+  /*
+   * Define variables to write (give a name)
+   */
+  nc_type ncDataType = NC_DOUBLE;
+  MPI_Datatype mpiDataType = MPI_DOUBLE;
 
-	err = ncmpi_def_var(ncFileId, "data", ncDataType, 3, dimIds, &varIds[0]);
-	PNETCDF_HANDLE_ERROR;
+  err = ncmpi_def_var(ncFileId, "data", ncDataType, 3, dimIds, &varIds[0]);
+  PNETCDF_HANDLE_ERROR;
 
-	/*
-	 * global attributes
-	 */
-	// did we use CDF-2 or CDF-5
-	{
-		int useCDF5_int = useCDF5 ? 1 : 0;
-		err = ncmpi_put_att_int(ncFileId, NC_GLOBAL, "CDF-5 mode", NC_INT, 1, &useCDF5_int);
-		PNETCDF_HANDLE_ERROR;
-	}
+  /*
+   * global attributes
+   */
+  // did we use CDF-2 or CDF-5
+  {
+    int useCDF5_int = useCDF5 ? 1 : 0;
+    err = ncmpi_put_att_int(ncFileId, NC_GLOBAL, "CDF-5 mode", NC_INT, 1, &useCDF5_int);
+    PNETCDF_HANDLE_ERROR;
+  }
 
-	/*
-	 * exit the define mode
-	 */
-	err = ncmpi_enddef(ncFileId);
-	PNETCDF_HANDLE_ERROR;
+  /*
+   * exit the define mode
+   */
+  err = ncmpi_enddef(ncFileId);
+  PNETCDF_HANDLE_ERROR;
 
-	/*
-	 * Get all the MPI_IO hints used
-	 */
-	err = ncmpi_get_file_info(ncFileId, &mpi_info_used);
-	PNETCDF_HANDLE_ERROR;
+  /*
+   * Get all the MPI_IO hints used
+   */
+  err = ncmpi_get_file_info(ncFileId, &mpi_info_used);
+  PNETCDF_HANDLE_ERROR;
 
-	// copy data to write in intermediate buffer
-	int nItems = counts[IX]*counts[IY]*counts[IZ];
+  // copy data to write in intermediate buffer
+  int nItems = counts[IX]*counts[IY]*counts[IZ];
 
-	{
+  {
 
-		// debug
-		// printf("Pnetcdf [rank=%d] starts=%lld %lld %lld, counts =%lld %lld %lld, gsizes=%d %d %d\n",
-		//	   myRank,
-		//	   starts[0],starts[1],starts[2],
-		//	   counts[0],counts[1],counts[2],
-		//	   gsizes[0],gsizes[1],gsizes[2]);
+    // debug
+    // printf("Pnetcdf [rank=%d] starts=%lld %lld %lld, counts =%lld %lld %lld, gsizes=%d %d %d\n",
+    //     myRank,
+    //     starts[0],starts[1],starts[2],
+    //     counts[0],counts[1],counts[2],
+    //     gsizes[0],gsizes[1],gsizes[2]);
 
-		/*
-		 * make sure PNetCDF doesn't complain when starts is outside of global domain
-		 * bound. When nItems is null, off course we don't write anything, but starts
-		 * offset have to be inside global domain.
-		 * So there is no harm, setting starts to origin.
-		 */
-		if (nItems == 0) {
-			starts[0]=0;
-			starts[1]=0;
-			starts[2]=0;
-		}
+    /*
+     * make sure PNetCDF doesn't complain when starts is outside of global domain
+     * bound. When nItems is null, off course we don't write anything, but starts
+     * offset have to be inside global domain.
+     * So there is no harm, setting starts to origin.
+     */
+    if (nItems == 0) {
+      starts[0]=0;
+      starts[1]=0;
+      starts[2]=0;
+    }
 
-		err = ncmpi_put_vara_all(ncFileId,
-				varIds[0],
-				starts,
-				counts,
-				localData,
-				nItems,
-				mpiDataType);
-		PNETCDF_HANDLE_ERROR;
-	}
+    err = ncmpi_put_vara_all(ncFileId,
+        varIds[0],
+        starts,
+        counts,
+        localData,
+        nItems,
+        mpiDataType);
+    PNETCDF_HANDLE_ERROR;
+  }
 
-	/*
-	 * close the file
-	 */
-	err = ncmpi_close(ncFileId);
-	PNETCDF_HANDLE_ERROR;
+  /*
+   * close the file
+   */
+  err = ncmpi_close(ncFileId);
+  PNETCDF_HANDLE_ERROR;
 
 } // write_pnetcdf
 #endif

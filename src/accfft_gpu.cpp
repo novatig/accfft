@@ -53,7 +53,7 @@ inline void print_memUse(const std::string where) {
  * Cleanup all CPU resources
  */
 void accfft_cleanup_gpu() {
-	// empty for now
+  // empty for now
 }
 
 
@@ -69,9 +69,9 @@ void accfft_cleanup_gpu() {
  * @param c_comm Cartesian communicator returned by \ref accfft_create_comm
  * @return
  */
-size_t accfft_local_size_dft_r2c_gpu(int * n, int * isize, int * istart, int * osize,
-		int *ostart, MPI_Comm c_comm) {
-  return accfft_local_size_dft_r2c_t<double>(n, isize, istart, osize, ostart, c_comm);
+size_t accfft_local_size_dft_r2c_gpu(int*n, int* isize, int* istart, int* osize,
+ int* ostart, MPI_Comm c_comm) {
+ return accfft_local_size_dft_r2c_t<double>(n,isize,istart,osize,ostart,c_comm);
 }
 
 /**
@@ -85,82 +85,78 @@ size_t accfft_local_size_dft_r2c_gpu(int * n, int * isize, int * istart, int * o
  * @return
  */
 accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
-		double * data_out_d, MPI_Comm c_comm, unsigned flags) {
-	accfft_plan_gpu *plan = new accfft_plan_gpu;
-	int procid;
-	MPI_Comm_rank(c_comm, &procid);
-	plan->procid = procid;
-	MPI_Cart_get(c_comm, 2, plan->np, plan->periods, plan->coord);
-	plan->c_comm = c_comm;
-	int *coord = plan->coord;
-	MPI_Comm_split(c_comm, coord[0], coord[1], &plan->row_comm);
-	MPI_Comm_split(c_comm, coord[1], coord[0], &plan->col_comm);
-	plan->N[0] = n[0];
-	plan->N[1] = n[1];
-	plan->N[2] = n[2];
-	plan->data = data_d;
-	plan->data_out = data_out_d;
+    double * data_out_d, MPI_Comm c_comm, unsigned flags)
+{
+  accfft_plan_gpu *plan = new accfft_plan_gpu;
+  int procid;
+  MPI_Comm_rank(c_comm, &procid);
+  plan->procid = procid;
+  MPI_Cart_get(c_comm, 2, plan->np, plan->periods, plan->coord);
+  plan->c_comm = c_comm;
+  int *coord = plan->coord;
+  MPI_Comm_split(c_comm, coord[0], coord[1], &plan->row_comm);
+  MPI_Comm_split(c_comm, coord[1], coord[0], &plan->col_comm);
+  plan->N[0] = n[0];
+  plan->N[1] = n[1];
+  plan->N[2] = n[2];
+  plan->data = data_d;
+  plan->data_out = data_out_d;
 
-	if (plan->np[1] == 1)
-		plan->oneD = true;
-	else
-		plan->oneD = false;
+  if (plan->np[1] == 1) plan->oneD = true;
+  else plan->oneD = false;
 
-	if (data_out_d == data_d) {
-		plan->inplace = true;
-	} else {
-		plan->inplace = false;
-	}
+  if (data_out_d == data_d) plan->inplace = true;
+  else plan->inplace = false;
 
-	int *osize_0 = plan->osize_0, *ostart_0 = plan->ostart_0;
-	int *osize_1 = plan->osize_1, *ostart_1 = plan->ostart_1;
-	int *osize_2 = plan->osize_2, *ostart_2 = plan->ostart_2;
-	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
-	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
+  int *osize_0 = plan->osize_0, *ostart_0 = plan->ostart_0;
+  int *osize_1 = plan->osize_1, *ostart_1 = plan->ostart_1;
+  int *osize_2 = plan->osize_2, *ostart_2 = plan->ostart_2;
+  int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
+  int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
   int* osize_y = plan->osize_y, *ostart_y = plan->ostart_y;
   int* osize_yi = plan->osize_yi;
   int* osize_x = plan->osize_x, *ostart_x = plan->ostart_x;
   int* osize_xi = plan->osize_xi;
   int* isize = plan->isize;
 
-	size_t alloc_max = 0;
-	int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
-	int n_tuples_o = (n[2] / 2 + 1) * 2;
+  size_t alloc_max = 0;
+  const int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
+  const int n_tuples_o = (n[2] / 2 + 1) * 2;
 
-	//int isize[3],osize[3],istart[3],ostart[3];
-	alloc_max = accfft_local_size_dft_r2c_gpu(n, plan->isize, plan->istart,
-			plan->osize, plan->ostart, c_comm);
-	plan->alloc_max = alloc_max;
+  //int isize[3],osize[3],istart[3],ostart[3];
+  alloc_max = accfft_local_size_dft_r2c_gpu(n, plan->isize, plan->istart,
+      plan->osize, plan->ostart, c_comm);
+  plan->alloc_max = alloc_max;
 
-	dfft_get_local_size_t<double>(n[0], n[1], n_tuples_o / 2, osize_0, ostart_0, c_comm);
-	dfft_get_local_size_t<double>(n[0], n_tuples_o / 2, n[1], osize_1, ostart_1,
-			c_comm);
-	dfft_get_local_size_t<double>(n[1], n_tuples_o / 2, n[0], osize_2, ostart_2,
-			c_comm);
+  dfft_get_local_size_t<double>(n[0], n[1], n_tuples_o / 2, osize_0, ostart_0, c_comm);
+  dfft_get_local_size_t<double>(n[0], n_tuples_o / 2, n[1], osize_1, ostart_1,
+      c_comm);
+  dfft_get_local_size_t<double>(n[1], n_tuples_o / 2, n[0], osize_2, ostart_2,
+      c_comm);
 
-	std::swap(osize_1[1], osize_1[2]);
-	std::swap(ostart_1[1], ostart_1[2]);
+  std::swap(osize_1[1], osize_1[2]);
+  std::swap(ostart_1[1], ostart_1[2]);
 
-	std::swap(ostart_2[1], ostart_2[2]);
-	std::swap(ostart_2[0], ostart_2[1]);
-	std::swap(osize_2[1], osize_2[2]);
-	std::swap(osize_2[0], osize_2[1]);
+  std::swap(ostart_2[1], ostart_2[2]);
+  std::swap(ostart_2[0], ostart_2[1]);
+  std::swap(osize_2[1], osize_2[2]);
+  std::swap(osize_2[0], osize_2[1]);
   // osize_y is the configuration after y transpose
-	dfft_get_local_size_t<double>(n[0], n[2], n[1], osize_y, ostart_y, c_comm);
-	std::swap(osize_y[1], osize_y[2]);
-	std::swap(ostart_y[1], ostart_y[2]);
+  dfft_get_local_size_t<double>(n[0], n[2], n[1], osize_y, ostart_y, c_comm);
+  std::swap(osize_y[1], osize_y[2]);
+  std::swap(ostart_y[1], ostart_y[2]);
   osize_yi[0] = osize_y[0];
   osize_yi[1] = osize_y[1] / 2 + 1;
   osize_yi[2] = osize_y[2];
 
   // for x only fft. The strategy is to divide (N1/P1 x N2) by P0 completely.
   // So we treat the last size to be just 1.
-	dfft_get_local_size_t<double>(isize[1] * n[2], n[2], n[0], osize_x, ostart_x, c_comm);
+  dfft_get_local_size_t<double>(isize[1] * n[2], n[2], n[0], osize_x, ostart_x, c_comm);
   osize_x[1] = osize_x[0];
   osize_x[0] = osize_x[2];
   osize_x[2] = 1;
 
-	dfft_get_local_size_t<double>(isize[1] * n[2], n[2], n[0] / 2 + 1, osize_xi, ostart_x, c_comm);
+  dfft_get_local_size_t<double>(isize[1] * n[2], n[2], n[0] / 2 + 1, osize_xi, ostart_x, c_comm);
   osize_xi[1] = osize_xi[0];
   osize_xi[0] = osize_xi[2];
   osize_xi[2] = 1;
@@ -168,517 +164,534 @@ accfft_plan_gpu* accfft_plan_dft_3d_r2c_gpu(int * n, double * data_d,
   ostart_x[1] = -1<<8; // starts have no meaning in this approach
   ostart_x[2] = -1<<8;
 
-	for (int i = 0; i < 3; i++) {
-		osize_1i[i] = osize_1[i];
-		osize_2i[i] = osize_2[i];
-		ostart_1i[i] = ostart_1[i];
-		ostart_2i[i] = ostart_2[i];
-	}
+  for (int i = 0; i < 3; i++) {
+    osize_1i[i] = osize_1[i];
+    osize_2i[i] = osize_2[i];
+    ostart_1i[i] = ostart_1[i];
+    ostart_2i[i] = ostart_2[i];
+  }
 
-	// fplan_0
-	//int NX = n[0], NY = n[1], NZ = n[2];
-	cufftResult_t cufft_error;
-	{
-		int f_inembed[1] = { n_tuples_i };
-		int f_onembed[1] = { n_tuples_o / 2 };
-		int idist = (n_tuples_i);
-		int odist = n_tuples_o / 2;
-		int istride = 1;
-		int ostride = 1;
+  // fplan_0
+  //int NX = n[0], NY = n[1], NZ = n[2];
+  cufftResult_t cufft_error;
+  {
+    int f_inembed[1] = { n_tuples_i };
+    int f_onembed[1] = { n_tuples_o / 2 };
+    int idist = (n_tuples_i);
+    int odist = n_tuples_o / 2;
+    int istride = 1;
+    int ostride = 1;
     #ifndef ALLPLANMANY
-		int batch = osize_0[1];
+    int batch = osize_0[1];
     #else
-		int batch = osize_0[0] * osize_0[1];
+    int batch = osize_0[0] * osize_0[1];
     #endif
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_0, 1, &n[2], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_D2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_0 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->iplan_0, 1, &n[2], f_onembed,
-					ostride, odist, // *onembed, ostride, odist
-					f_inembed, istride, idist, // *inembed, istride, idist
-					CUFFT_Z2D, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: iplan_0 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
-	// fplan_1
-	{
-		int f_inembed[1] = { n[1] };
-		int f_onembed[1] = { n[1] };
-		int idist = 1;
-		int odist = 1;
-		int istride = osize_1[2];
-		int ostride = osize_1[2];
-		int batch = osize_1[2];
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->fplan_0, 1, &n[2], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_D2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_0 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->iplan_0, 1, &n[2], f_onembed,
+          ostride, odist, // *onembed, ostride, odist
+          f_inembed, istride, idist, // *inembed, istride, idist
+          CUFFT_Z2D, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: iplan_0 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
+  // fplan_1
+  {
+    int f_inembed[1] = { n[1] };
+    int f_onembed[1] = { n[1] };
+    int idist = 1;
+    int odist = 1;
+    int istride = osize_1[2];
+    int ostride = osize_1[2];
+    int batch = osize_1[2];
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_1, 1, &n[1], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_Z2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_1 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
-	// fplan_2
-	{
-		int f_inembed[1] = { n[0] };
-		int f_onembed[1] = { n[0] };
-		int idist = 1;
-		int odist = 1;
-		int istride = osize_2[1] * osize_2[2];
-		int ostride = osize_2[1] * osize_2[2];
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->fplan_1, 1, &n[1], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_Z2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_1 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
+  // fplan_2
+  {
+    int f_inembed[1] = { n[0] };
+    int f_onembed[1] = { n[0] };
+    int idist = 1;
+    int odist = 1;
+    int istride = osize_2[1] * osize_2[2];
+    int ostride = osize_2[1] * osize_2[2];
     #ifndef ALLPLANMANY
-		int batch = osize_2[2];
+    int batch = osize_2[2];
     #else
-		int batch = osize_2[1] * osize_2[2];
+    int batch = osize_2[1] * osize_2[2];
     #endif
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_2, 1, &n[0], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_Z2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_2 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
-	// fplan_y
-	{
-		int f_inembed[1] = { n[1] };
-		int f_onembed[1] = { n[1] / 2 + 1 };
-		int idist = 1;
-		int odist = 1;
-		int istride = osize_y[2];
-		int ostride = osize_y[2];
-		int batch = osize_y[2];
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->fplan_2, 1, &n[0], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_Z2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_2 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
+  // fplan_y
+  {
+    int f_inembed[1] = { n[1] };
+    int f_onembed[1] = { n[1] / 2 + 1 };
+    int idist = 1;
+    int odist = 1;
+    int istride = osize_y[2];
+    int ostride = osize_y[2];
+    int batch = osize_y[2];
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_y, 1, &n[1], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_D2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_y creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->iplan_y, 1, &n[1], f_onembed,
-					ostride, odist, // *inembed, istride, idist
-					f_inembed, istride, idist, // *onembed, ostride, odist
-					CUFFT_Z2D, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: iplan_y creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->fplan_y, 1, &n[1], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_D2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_y creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->iplan_y, 1, &n[1], f_onembed,
+          ostride, odist, // *inembed, istride, idist
+          f_inembed, istride, idist, // *onembed, ostride, odist
+          CUFFT_Z2D, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: iplan_y creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
   // fplan_x
   if(0)
-	{
-		int f_inembed[1] = { n[0] };
-		int f_onembed[1] = { n[0] / 2 + 1 };
-		int idist = 1;
-		int odist = 1;
-		int istride = osize_x[1] * osize_x[2];
-		int ostride = osize_xi[1] * osize_xi[2];
-		int batch = osize_x[1] * osize_x[2];
+  {
+    int f_inembed[1] = { n[0] };
+    int f_onembed[1] = { n[0] / 2 + 1 };
+    int idist = 1;
+    int odist = 1;
+    int istride = osize_x[1] * osize_x[2];
+    int ostride = osize_xi[1] * osize_xi[2];
+    int batch = osize_x[1] * osize_x[2];
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_x, 1, &n[0], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_D2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_x creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->iplan_x, 1, &n[0], f_onembed,
-					ostride, odist, // *onembed, ostride, odist
-					f_inembed, istride, idist, // *inembed, istride, idist
-					CUFFT_Z2D, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: iplan_x creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->fplan_x, 1, &n[0], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_D2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_x creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+    if (batch != 0)
+    {
+      cufft_error = cufftPlanMany(&plan->iplan_x, 1, &n[0], f_onembed,
+          ostride, odist, // *onembed, ostride, odist
+          f_inembed, istride, idist, // *inembed, istride, idist
+          CUFFT_Z2D, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: iplan_x creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
 
-	// 1D Decomposition
-	if (plan->oneD) {
+  // 1D Decomposition
+  if (plan->oneD)
+  {
+    plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[0], n[1], n_tuples_o, c_comm, 1, plan->alloc_max);
+    plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], n_tuples_o,
+        plan->Mem_mgr, c_comm);
+    plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], n_tuples_o,
+        plan->Mem_mgr, c_comm);
+    plan->T_plan_1 = NULL;
+    plan->T_plan_1i = NULL;
 
-		plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[0], n[1], n_tuples_o, c_comm, 1, plan->alloc_max);
-		plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], n_tuples_o,
-				plan->Mem_mgr, c_comm);
-		plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], n_tuples_o,
-				plan->Mem_mgr, c_comm);
-		plan->T_plan_1 = NULL;
-		plan->T_plan_1i = NULL;
+    plan->alloc_max = alloc_max;
+    plan->T_plan_2->alloc_local = alloc_max;
+    plan->T_plan_2i->alloc_local = alloc_max;
 
-		plan->alloc_max = alloc_max;
-		plan->T_plan_2->alloc_local = alloc_max;
-		plan->T_plan_2i->alloc_local = alloc_max;
+    if (flags == ACCFFT_MEASURE) {
+      plan->T_plan_2->which_fast_method_gpu(plan->T_plan_2, data_out_d);
+    } else {
+      plan->T_plan_2->method = 2;
+      plan->T_plan_2->kway = 2;
+    }
+    checkCuda_accfft (cudaDeviceSynchronize());
 
-		if (flags == ACCFFT_MEASURE) {
-			plan->T_plan_2->which_fast_method_gpu(plan->T_plan_2, data_out_d);
-		} else {
-			plan->T_plan_2->method = 2;
-			plan->T_plan_2->kway = 2;
-		}
-		checkCuda_accfft (cudaDeviceSynchronize());
+    plan->T_plan_2i->method = -plan->T_plan_2->method;
+    plan->T_plan_2i->kway = plan->T_plan_2->kway;
+    plan->T_plan_2i->kway_async = plan->T_plan_2->kway_async;
 
-		plan->T_plan_2i->method = -plan->T_plan_2->method;
-		plan->T_plan_2i->kway = plan->T_plan_2->kway;
-		plan->T_plan_2i->kway_async = plan->T_plan_2->kway_async;
+  } // end 1d r2c
 
-	} // end 1d r2c
-
-	// 2D Decomposition
-	if (!plan->oneD) {
-		// the reaseon for n_tuples/2 is to avoid splitting of imag and real parts of complex numbers
-		plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[1], n_tuples_o / 2, 2,
-				plan->row_comm, osize_0[0], alloc_max);
-		plan->T_plan_1 = new T_Plan_gpu<double>(n[1], n_tuples_o / 2, 2,
-				plan->Mem_mgr, plan->row_comm, osize_0[0]);
-		plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], osize_2[2] * 2,
-				plan->Mem_mgr, plan->col_comm);
-		plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], osize_2i[2] * 2,
-				plan->Mem_mgr, plan->col_comm);
-		plan->T_plan_1i = new T_Plan_gpu<double>(n_tuples_o / 2, n[1], 2,
-				plan->Mem_mgr, plan->row_comm, osize_1i[0]);
+  // 2D Decomposition
+  if (!plan->oneD)
+  {
+    // the reaseon for n_tuples/2 is to avoid splitting of imag and real parts of complex numbers
+    plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[1], n_tuples_o / 2, 2,
+        plan->row_comm, osize_0[0], alloc_max);
+    plan->T_plan_1 = new T_Plan_gpu<double>(n[1], n_tuples_o / 2, 2,
+        plan->Mem_mgr, plan->row_comm, osize_0[0]);
+    plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], osize_2[2] * 2,
+        plan->Mem_mgr, plan->col_comm);
+    plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], osize_2i[2] * 2,
+        plan->Mem_mgr, plan->col_comm);
+    plan->T_plan_1i = new T_Plan_gpu<double>(n_tuples_o / 2, n[1], 2,
+        plan->Mem_mgr, plan->row_comm, osize_1i[0]);
     // to transpose N0/P0 x N1/P1 x N2 -> N0/P0 x N1 x N2/P1
-		plan->T_plan_y = new T_Plan_gpu<double>(n[1], n[2], 1,
-				plan->Mem_mgr, plan->row_comm, plan->isize[0]);
+    plan->T_plan_y = new T_Plan_gpu<double>(n[1], n[2], 1,
+        plan->Mem_mgr, plan->row_comm, plan->isize[0]);
     // to transpose N0/P0 x N1 x N2/P1 -> N0/P0 x N1/P1 x N2
-		plan->T_plan_yi = new T_Plan_gpu<double>(n[2], n[1], 1,
-				plan->Mem_mgr, plan->row_comm, plan->isize[0]);
+    plan->T_plan_yi = new T_Plan_gpu<double>(n[2], n[1], 1,
+        plan->Mem_mgr, plan->row_comm, plan->isize[0]);
 
-		plan->T_plan_1->alloc_local = plan->alloc_max;
-		plan->T_plan_2->alloc_local = plan->alloc_max;
-		plan->T_plan_2i->alloc_local = plan->alloc_max;
-		plan->T_plan_1i->alloc_local = plan->alloc_max;
-		plan->T_plan_y->alloc_local = plan->alloc_max;
-		plan->T_plan_yi->alloc_local = plan->alloc_max;
+    plan->T_plan_1->alloc_local = plan->alloc_max;
+    plan->T_plan_2->alloc_local = plan->alloc_max;
+    plan->T_plan_2i->alloc_local = plan->alloc_max;
+    plan->T_plan_1i->alloc_local = plan->alloc_max;
+    plan->T_plan_y->alloc_local = plan->alloc_max;
+    plan->T_plan_yi->alloc_local = plan->alloc_max;
 
-		if (flags == ACCFFT_MEASURE) {
-			if (coord[0] == 0) {
-				plan->T_plan_1->which_fast_method_gpu(plan->T_plan_1,
-						data_out_d, osize_0[0]);
-			}
-		} else {
-			plan->T_plan_1->method = 2;
-			plan->T_plan_1->kway = 2;
-		}
+    if (flags == ACCFFT_MEASURE) {
+      if (coord[0] == 0) {
+        plan->T_plan_1->which_fast_method_gpu(plan->T_plan_1,
+            data_out_d, osize_0[0]);
+      }
+    } else {
+      plan->T_plan_1->method = 2;
+      plan->T_plan_1->kway = 2;
+    }
 
-		MPI_Bcast(&plan->T_plan_1->method, 1, MPI_INT, 0, c_comm);
-		MPI_Bcast(&plan->T_plan_1->kway, 1, MPI_INT, 0, c_comm);
-		MPI_Bcast(&plan->T_plan_1->kway_async, 1, par::Mpi_datatype<bool>::value(), 0, c_comm);
+    MPI_Bcast(&plan->T_plan_1->method, 1, MPI_INT, 0, c_comm);
+    MPI_Bcast(&plan->T_plan_1->kway, 1, MPI_INT, 0, c_comm);
+    MPI_Bcast(&plan->T_plan_1->kway_async, 1, par::Mpi_datatype<bool>::value(), 0, c_comm);
 
-		checkCuda_accfft (cudaDeviceSynchronize());
-		plan->T_plan_1->method = plan->T_plan_1->method;
-		plan->T_plan_2->method = plan->T_plan_1->method;
-		plan->T_plan_2i->method = -plan->T_plan_1->method;
-		plan->T_plan_1i->method = -plan->T_plan_1->method;
-		plan->T_plan_y->method = plan->T_plan_1->method;
-		plan->T_plan_yi->method = -plan->T_plan_1->method;
+    checkCuda_accfft (cudaDeviceSynchronize());
+    plan->T_plan_1->method = plan->T_plan_1->method;
+    plan->T_plan_2->method = plan->T_plan_1->method;
+    plan->T_plan_2i->method = -plan->T_plan_1->method;
+    plan->T_plan_1i->method = -plan->T_plan_1->method;
+    plan->T_plan_y->method = plan->T_plan_1->method;
+    plan->T_plan_yi->method = -plan->T_plan_1->method;
 
-		plan->T_plan_1->kway = plan->T_plan_1->kway;
-		plan->T_plan_2->kway = plan->T_plan_1->kway;
-		plan->T_plan_2i->kway = plan->T_plan_1->kway;
-		plan->T_plan_1i->kway = plan->T_plan_1->kway;
-		plan->T_plan_y->kway = plan->T_plan_1->kway;
-		plan->T_plan_yi->kway = plan->T_plan_1->kway;
+    plan->T_plan_1->kway = plan->T_plan_1->kway;
+    plan->T_plan_2->kway = plan->T_plan_1->kway;
+    plan->T_plan_2i->kway = plan->T_plan_1->kway;
+    plan->T_plan_1i->kway = plan->T_plan_1->kway;
+    plan->T_plan_y->kway = plan->T_plan_1->kway;
+    plan->T_plan_yi->kway = plan->T_plan_1->kway;
 
-		plan->T_plan_1->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_2->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_2i->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_1i->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_y->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_yi->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_1->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_2->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_2i->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_1i->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_y->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_yi->kway_async = plan->T_plan_1->kway_async;
 
-		plan->iplan_1 = -1;
-		plan->iplan_2 = -1;
+    plan->iplan_1 = -1;
+    plan->iplan_2 = -1;
 
-	} // end 2d r2c
+  } // end 2d r2c
 
   // T_plan_x has to be created for both oneD and !oneD
   // Note that the T method is set via T_plan_2 for oneD case
   // to transpose N0/P0 x N1/P1 x N2 -> N0 x (N1/P1 x N2)/P0
-	plan->T_plan_x = new T_Plan_gpu<double>(n[0], isize[1] * isize[2], 1,
-			plan->Mem_mgr, plan->col_comm, 1);
+  plan->T_plan_x = new T_Plan_gpu<double>(n[0], isize[1] * isize[2], 1,
+      plan->Mem_mgr, plan->col_comm, 1);
   // to transpose N0 x (N1/P1 x N2)/P0 -> N0/P0 x N1/P1 x N2
-	plan->T_plan_xi = new T_Plan_gpu<double>(isize[1] * isize[2], n[0], 1,
-			plan->Mem_mgr, plan->col_comm, 1);
-	plan->T_plan_x->alloc_local = plan->alloc_max;
-	plan->T_plan_xi->alloc_local = plan->alloc_max;
-	plan->T_plan_x->method = plan->T_plan_2->method;
-	plan->T_plan_xi->method = -plan->T_plan_2->method;
-	plan->T_plan_x->kway = plan->T_plan_2->kway;
-	plan->T_plan_xi->kway = plan->T_plan_2->kway;
-	plan->T_plan_x->kway_async = plan->T_plan_2->kway_async;
-	plan->T_plan_xi->kway_async = plan->T_plan_2->kway_async;
-	plan->r2c_plan_baked = true;
-	return plan;
-
+  plan->T_plan_xi = new T_Plan_gpu<double>(isize[1] * isize[2], n[0], 1,
+      plan->Mem_mgr, plan->col_comm, 1);
+  plan->T_plan_x->alloc_local = plan->alloc_max;
+  plan->T_plan_xi->alloc_local = plan->alloc_max;
+  plan->T_plan_x->method = plan->T_plan_2->method;
+  plan->T_plan_xi->method = -plan->T_plan_2->method;
+  plan->T_plan_x->kway = plan->T_plan_2->kway;
+  plan->T_plan_xi->kway = plan->T_plan_2->kway;
+  plan->T_plan_x->kway_async = plan->T_plan_2->kway_async;
+  plan->T_plan_xi->kway_async = plan->T_plan_2->kway_async;
+  plan->r2c_plan_baked = true;
+  return plan;
 } // end accfft_plan_dft_r2c_gpu
 
+
+
+
+
+
+
+
+
+
+
+
 void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
-		double * data_out_d, double * timer, std::bitset<3> xyz) {
+    double * data_out_d, double * timer, std::bitset<3> xyz)
+{
+  if (data_d == NULL) data_d = plan->data;
+  if (data_out_d == NULL) data_out_d = plan->data_out;
 
-	if (data_d == NULL)
-		data_d = plan->data;
-	if (data_out_d == NULL)
-		data_out_d = plan->data_out;
+  int * coords = plan->coord;
+  int procid = plan->procid;
+  double fft_time = 0;
+  double timings[5] = { 0 };
 
-	int * coords = plan->coord;
-	int procid = plan->procid;
-	double fft_time = 0;
-	double timings[5] = { 0 };
-
-	cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
-	cudaEvent_t fft_startEvent, fft_stopEvent;
-	checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
-	checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_startEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
-	//int NY = plan->N[1];
+  cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
+  cudaEvent_t fft_startEvent, fft_stopEvent;
+  checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
+  checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_startEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
+  //int NY = plan->N[1];
   const int n[3] = {plan->N[0], plan->N[1], plan->N[2]};
-	float dummy_time = 0;
+  float dummy_time = 0;
 
-	int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
-	int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
-	int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
-	int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
-	//int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
+  int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
+  int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
+  int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
+  int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
+  //int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
 
-	if (direction == -1) {
-		/**************************************************************/
-		/*******************  N0/P0 x N1/P1 x N2 **********************/
-		/**************************************************************/
-		// FFT in Z direction
-		if (xyz[2]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+  if (direction == -1)
+  {
+    /**************************************************************/
+    /*******************  N0/P0 x N1/P1 x N2 **********************/
+    /**************************************************************/
+    // FFT in Z direction
+    if (xyz[2])
+    {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
       #ifndef ALLPLANMANY
-      int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
-    	int n_tuples_o = (n[2] / 2 + 1) * 2;
-      for (size_t i = 0; i < (size_t) osize_0[0]; ++i) {
-				checkCuda_accfft(
-						cufftExecD2Z(plan->fplan_0,
-							(cufftDoubleReal*) &data_d[i *osize_0[1] *n_tuples_i ],
-								(cufftDoubleComplex*) &data_out_d[i *osize_0[1] *n_tuples_o ]));
-			}
+        int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
+        int n_tuples_o = (n[2] / 2 + 1) * 2;
+        for (size_t i = 0; i < (size_t) osize_0[0]; ++i)
+        {
+          checkCuda_accfft(
+              cufftExecD2Z(plan->fplan_0,
+              (cufftDoubleReal*) &data_d[i *osize_0[1] *n_tuples_i ],
+              (cufftDoubleComplex*) &data_out_d[i *osize_0[1] *n_tuples_o ]));
+        }
       #else
-      checkCuda_accfft(
+        checkCuda_accfft(
             cufftExecD2Z(plan->fplan_0, (cufftDoubleReal*) data_d,
             (cufftDoubleComplex*) data_out_d));
       #endif
 
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		} else
-			data_out_d = data_d;
-		// Perform N0/P0 transpose
-
-		if (!plan->oneD) {
-			plan->T_plan_1->execute_gpu(plan->T_plan_1, data_out_d, timings, 2,
-					osize_0[0], coords[0]);
-		}
-		/**************************************************************/
-		/*******************  N0/P0 x N1 x N2/P1 **********************/
-		/**************************************************************/
-		if (xyz[1]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (size_t i = 0; i < (size_t) osize_1[0]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2Z(plan->fplan_1,
-								(cufftDoubleComplex*) &data_out_d[2 * i
-										* osize_1[1] * osize_1[2]],
-								(cufftDoubleComplex*) &data_out_d[2 * i
-										* osize_1[1] * osize_1[2]],
-								CUFFT_FORWARD));
-			}
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
-
-		if (plan->oneD) {
-			plan->T_plan_2->execute_gpu(plan->T_plan_2, data_out_d, timings, 2);
-		} else {
-			plan->T_plan_2->execute_gpu(plan->T_plan_2, data_out_d, timings, 2,
-					1, coords[1]);
-		}
-		/**************************************************************/
-		/*******************  N0 x N1/P0 x N2/P1 **********************/
-		/**************************************************************/
-		if (xyz[0]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-      #ifndef ALLPLANMANY
-      for (size_t i = 0; i < (size_t) osize_2[1]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2Z(plan->fplan_2,
-								(cufftDoubleComplex*) &data_out_d[2 *i *osize_2[2]],
-								(cufftDoubleComplex*) &data_out_d[2 *i *osize_2[2]], CUFFT_FORWARD));
-			}
-      #else
-			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_out_d,
-							(cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
-      #endif
-
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
-	} else if (direction == 1) {
-		if (xyz[0]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-      #ifndef ALLPLANMANY
-      for (size_t i = 0; i < (size_t) osize_2[1]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2Z(plan->fplan_2,
-								(cufftDoubleComplex*) &data_d[2 *i *osize_2[2]],
-								(cufftDoubleComplex*) &data_d[2 *i *osize_2[2]], CUFFT_INVERSE));
-			}
-      #else
-			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_d,
-							(cufftDoubleComplex*) data_d, CUFFT_INVERSE));
-      #endif
-
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
-
-		if (plan->oneD) {
-			plan->T_plan_2i->execute_gpu(plan->T_plan_2i, data_d, timings, 1);
-		} else {
-			plan->T_plan_2i->execute_gpu(plan->T_plan_2i, data_d, timings, 1, 1,
-					coords[1]);
-		}
-		/**************************************************************/
-		/*******************  N0/P0 x N1 x N2/P1 **********************/
-		/**************************************************************/
-		if (xyz[1]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2Z(plan->fplan_1,
-								(cufftDoubleComplex*) &data_d[2 * i * n[1]
-										* osize_1i[2]],
-								(cufftDoubleComplex*) &data_d[2 * i * n[1]
-										* osize_1i[2]], CUFFT_INVERSE));
-			}
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
-
-		if (!plan->oneD) {
-			plan->T_plan_1i->execute_gpu(plan->T_plan_1i, data_d, timings, 1,
-					osize_1i[0], coords[0]);
-		}
-		/**************************************************************/
-		/*******************  N0/P0 x N1/P1 x N2 **********************/
-		/**************************************************************/
-
-		// IFFT in Z direction
-		if (xyz[2]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-      #ifndef ALLPLANMANY
-      int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
-      int n_tuples_o = (n[2] / 2 + 1) * 2;
-      for (size_t i = 0; i < (size_t) osize_0[0]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2D(plan->iplan_0,
-              (cufftDoubleComplex*) &data_d[ i * osize_0[1] * n_tuples_o ],
-							(cufftDoubleReal*) &data_out_d[ i * osize_0[1]	* n_tuples_i ]));
-			}
-      #else
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
       checkCuda_accfft(
-					cufftExecZ2D(plan->iplan_0, (cufftDoubleComplex*) data_d,
-							(cufftDoubleReal*) data_out_d));
+          cudaEventElapsedTime(&dummy_time, fft_startEvent, fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    } else
+      data_out_d = data_d;
+    // Perform N0/P0 transpose
+
+    if (!plan->oneD) {
+      plan->T_plan_1->execute_gpu(plan->T_plan_1, data_out_d, timings, 2,
+          osize_0[0], coords[0]);
+    }
+    /**************************************************************/
+    /*******************  N0/P0 x N1 x N2/P1 **********************/
+    /**************************************************************/
+    if (xyz[1])
+    {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      for (size_t i = 0; i < (size_t) osize_1[0]; ++i) {
+        checkCuda_accfft( cufftExecZ2Z(plan->fplan_1,
+            (cufftDoubleComplex*) &data_out_d[2 * i * osize_1[1] * osize_1[2]],
+            (cufftDoubleComplex*) &data_out_d[2 * i * osize_1[1] * osize_1[2]],
+                CUFFT_FORWARD));
+      }
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft( cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
+
+    if (plan->oneD) {
+      plan->T_plan_2->execute_gpu(plan->T_plan_2, data_out_d, timings, 2);
+    } else {
+      plan->T_plan_2->execute_gpu(plan->T_plan_2, data_out_d, timings, 2,
+          1, coords[1]);
+    }
+    /**************************************************************/
+    /*******************  N0 x N1/P0 x N2/P1 **********************/
+    /**************************************************************/
+    if (xyz[0])
+    {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      #ifndef ALLPLANMANY
+      for (size_t i = 0; i < (size_t) osize_2[1]; ++i) {
+        checkCuda_accfft(
+          cufftExecZ2Z(plan->fplan_2,
+          (cufftDoubleComplex*) &data_out_d[2 *i *osize_2[2]],
+          (cufftDoubleComplex*) &data_out_d[2 *i *osize_2[2]], CUFFT_FORWARD));
+      }
+      #else
+        checkCuda_accfft(
+            cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_out_d,
+                (cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
       #endif
 
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		} else
-			data_out_d = data_d;
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
+  }
+  else if (direction == 1)
+  {
+    if (xyz[0])
+    {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      #ifndef ALLPLANMANY
+        for (size_t i = 0; i < (size_t) osize_2[1]; ++i) {
+          checkCuda_accfft(
+              cufftExecZ2Z(plan->fplan_2,
+                (cufftDoubleComplex*) &data_d[2 *i *osize_2[2]],
+                (cufftDoubleComplex*) &data_d[2 *i *osize_2[2]], CUFFT_INVERSE));
+      }
+      #else
+        checkCuda_accfft(
+            cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_d,
+                (cufftDoubleComplex*) data_d, CUFFT_INVERSE));
+      #endif
 
-	}
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
 
-	checkCuda_accfft(cudaEventDestroy(memcpy_startEvent));
-	checkCuda_accfft(cudaEventDestroy(memcpy_stopEvent));
-	checkCuda_accfft(cudaEventDestroy(fft_startEvent));
-	checkCuda_accfft(cudaEventDestroy(fft_stopEvent));
-	timings[4] += fft_time;
-	if (timer == NULL) {
-		//delete [] timings;
-	} else {
-		timer[0] += timings[0];
-		timer[1] += timings[1];
-		timer[2] += timings[2];
-		timer[3] += timings[3];
-		timer[4] += timings[4];
-	}
-	checkCuda_accfft (cudaDeviceSynchronize());
+    if (plan->oneD) {
+      plan->T_plan_2i->execute_gpu(plan->T_plan_2i, data_d, timings, 1);
+    } else {
+      plan->T_plan_2i->execute_gpu(plan->T_plan_2i, data_d, timings, 1, 1,
+          coords[1]);
+    }
+    /**************************************************************/
+    /*******************  N0/P0 x N1 x N2/P1 **********************/
+    /**************************************************************/
+    if (xyz[1])
+    {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
+        checkCuda_accfft( cufftExecZ2Z(plan->fplan_1,
+          (cufftDoubleComplex*) &data_d[2 * i * n[1] * osize_1i[2]],
+          (cufftDoubleComplex*) &data_d[2 * i * n[1] * osize_1i[2]],
+          CUFFT_INVERSE));
+      }
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
 
-	return;
+    if (!plan->oneD) {
+      plan->T_plan_1i->execute_gpu(plan->T_plan_1i, data_d, timings, 1,
+          osize_1i[0], coords[0]);
+    }
+    /**************************************************************/
+    /*******************  N0/P0 x N1/P1 x N2 **********************/
+    /**************************************************************/
+
+    // IFFT in Z direction
+    if (xyz[2])
+    {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      #ifndef ALLPLANMANY
+        int n_tuples_i = plan->inplace ?  (n[2] / 2 + 1) * 2 : n[2];
+        int n_tuples_o = (n[2] / 2 + 1) * 2;
+        for (size_t i = 0; i < (size_t) osize_0[0]; ++i) {
+          checkCuda_accfft( cufftExecZ2D(plan->iplan_0,
+              (cufftDoubleComplex*) &data_d[ i * osize_0[1] * n_tuples_o ],
+              (cufftDoubleReal*) &data_out_d[ i * osize_0[1]  * n_tuples_i ]));
+        }
+      #else
+        checkCuda_accfft(
+            cufftExecZ2D(plan->iplan_0, (cufftDoubleComplex*) data_d,
+                (cufftDoubleReal*) data_out_d));
+      #endif
+
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent, fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    } else
+      data_out_d = data_d;
+  }
+
+  checkCuda_accfft(cudaEventDestroy(memcpy_startEvent));
+  checkCuda_accfft(cudaEventDestroy(memcpy_stopEvent));
+  checkCuda_accfft(cudaEventDestroy(fft_startEvent));
+  checkCuda_accfft(cudaEventDestroy(fft_stopEvent));
+  timings[4] += fft_time;
+  if (timer == NULL) {
+    //delete [] timings;
+  } else {
+    timer[0] += timings[0];
+    timer[1] += timings[1];
+    timer[2] += timings[2];
+    timer[3] += timings[3];
+    timer[4] += timings[4];
+  }
+  checkCuda_accfft (cudaDeviceSynchronize());
+
+  return;
 } // end accfft_execute_gpu
 
 /**
@@ -692,19 +705,19 @@ void accfft_execute_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
  * @param XYZ a bit set field that determines which directions FFT should be executed
  */
 void accfft_execute_r2c_gpu(accfft_plan_gpu* plan, double * data,
-		Complex * data_out, double * timer, std::bitset<3> xyz) {
-	if (plan->r2c_plan_baked) {
-		double * data_out_ptr = (double*) data_out;
-		accfft_execute_gpu(plan, -1, data, data_out_ptr, timer, xyz);
-		data_out = (Complex*) data_out_ptr;
-	} else {
-		if (plan->procid == 0)
-			std::cout
-					<< "Error. r2c plan has not been made correctly. Please first create the plan before calling execute functions."
-					<< std::endl;
-	}
+    Complex * data_out, double * timer, std::bitset<3> xyz) {
+  if (plan->r2c_plan_baked) {
+    double * data_out_ptr = (double*) data_out;
+    accfft_execute_gpu(plan, -1, data, data_out_ptr, timer, xyz);
+    data_out = (Complex*) data_out_ptr;
+  } else {
+    if (plan->procid == 0)
+      std::cout
+          << "Error. r2c plan has not been made correctly. Please first create the plan before calling execute functions."
+          << std::endl;
+  }
 
-	return;
+  return;
 }
 
 /**
@@ -718,19 +731,19 @@ void accfft_execute_r2c_gpu(accfft_plan_gpu* plan, double * data,
  * @param XYZ a bit set field that determines which directions FFT should be executed
  */
 void accfft_execute_c2r_gpu(accfft_plan_gpu* plan, Complex * data,
-		double * data_out, double * timer, std::bitset<3> xyz) {
-	if (plan->r2c_plan_baked) {
-		double * data_ptr = (double*) data;
-		accfft_execute_gpu(plan, 1, data_ptr, data_out, timer, xyz);
-		data = (Complex*) data_ptr;
-	} else {
-		if (plan->procid == 0)
-			std::cout
-					<< "Error. r2c plan has not been made correctly. Please first create the plan before calling execute functions."
-					<< std::endl;
-	}
+    double * data_out, double * timer, std::bitset<3> xyz) {
+  if (plan->r2c_plan_baked) {
+    double * data_ptr = (double*) data;
+    accfft_execute_gpu(plan, 1, data_ptr, data_out, timer, xyz);
+    data = (Complex*) data_ptr;
+  } else {
+    if (plan->procid == 0)
+      std::cout
+          << "Error. r2c plan has not been made correctly. Please first create the plan before calling execute functions."
+          << std::endl;
+  }
 
-	return;
+  return;
 }
 
 /**
@@ -746,7 +759,7 @@ void accfft_execute_c2r_gpu(accfft_plan_gpu* plan, Complex * data,
  * @return
  */
 size_t accfft_local_size_dft_c2c_gpu(int * n, int * isize, int * istart, int * osize,
-		int *ostart, MPI_Comm c_comm) {
+    int *ostart, MPI_Comm c_comm) {
   return accfft_local_size_dft_c2c_t<double>(n, isize, istart, osize, ostart, c_comm);
 }
 
@@ -761,233 +774,233 @@ size_t accfft_local_size_dft_c2c_gpu(int * n, int * isize, int * istart, int * o
  * @return
  */
 accfft_plan_gpu* accfft_plan_dft_3d_c2c_gpu(int * n, Complex * data_d,
-		Complex * data_out_d, MPI_Comm c_comm, unsigned flags) {
-	accfft_plan_gpu *plan = new accfft_plan_gpu;
-	int nprocs, procid;
-	MPI_Comm_rank(c_comm, &procid);
-	plan->procid = procid;
-	MPI_Cart_get(c_comm, 2, plan->np, plan->periods, plan->coord);
-	plan->c_comm = c_comm;
-	int *coord = plan->coord;
-	MPI_Comm_split(c_comm, coord[0], coord[1], &plan->row_comm);
-	MPI_Comm_split(c_comm, coord[1], coord[0], &plan->col_comm);
-	plan->N[0] = n[0];
-	plan->N[1] = n[1];
-	plan->N[2] = n[2];
-	int NX = n[0], NY = n[1], NZ = n[2];
-	cufftResult_t cufft_error;
+    Complex * data_out_d, MPI_Comm c_comm, unsigned flags) {
+  accfft_plan_gpu *plan = new accfft_plan_gpu;
+  int nprocs, procid;
+  MPI_Comm_rank(c_comm, &procid);
+  plan->procid = procid;
+  MPI_Cart_get(c_comm, 2, plan->np, plan->periods, plan->coord);
+  plan->c_comm = c_comm;
+  int *coord = plan->coord;
+  MPI_Comm_split(c_comm, coord[0], coord[1], &plan->row_comm);
+  MPI_Comm_split(c_comm, coord[1], coord[0], &plan->col_comm);
+  plan->N[0] = n[0];
+  plan->N[1] = n[1];
+  plan->N[2] = n[2];
+  int NX = n[0], NY = n[1], NZ = n[2];
+  cufftResult_t cufft_error;
 
-	plan->data_c = data_d;
-	plan->data_out_c = data_out_d;
-	if (data_out_d == data_d) {
-		plan->inplace = true;
-	} else {
-		plan->inplace = false;
-	}
+  plan->data_c = data_d;
+  plan->data_out_c = data_out_d;
+  if (data_out_d == data_d) {
+    plan->inplace = true;
+  } else {
+    plan->inplace = false;
+  }
 
-	if (plan->np[1] == 1)
-		plan->oneD = true;
-	else
-		plan->oneD = false;
+  if (plan->np[1] == 1)
+    plan->oneD = true;
+  else
+    plan->oneD = false;
 
-	int *osize_0 = plan->osize_0, *ostart_0 = plan->ostart_0;
-	int *osize_1 = plan->osize_1, *ostart_1 = plan->ostart_1;
-	int *osize_2 = plan->osize_2, *ostart_2 = plan->ostart_2;
-	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
-	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
+  int *osize_0 = plan->osize_0, *ostart_0 = plan->ostart_0;
+  int *osize_1 = plan->osize_1, *ostart_1 = plan->ostart_1;
+  int *osize_2 = plan->osize_2, *ostart_2 = plan->ostart_2;
+  int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
+  int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
 
-	size_t alloc_local;
-	size_t alloc_max = 0;
+  size_t alloc_local;
+  size_t alloc_max = 0;
   int n_tuples = n[2] * 2;
 
-	//int isize[3],osize[3],istart[3],ostart[3];
-	alloc_max = accfft_local_size_dft_c2c_gpu(n, plan->isize, plan->istart,
-			plan->osize, plan->ostart, c_comm);
-	plan->alloc_max = alloc_max;
+  //int isize[3],osize[3],istart[3],ostart[3];
+  alloc_max = accfft_local_size_dft_c2c_gpu(n, plan->isize, plan->istart,
+      plan->osize, plan->ostart, c_comm);
+  plan->alloc_max = alloc_max;
 
-	dfft_get_local_size_t<double>(n[0], n[1], n[2], osize_0, ostart_0, c_comm);
-	dfft_get_local_size_t<double>(n[0], n[2], n[1], osize_1, ostart_1, c_comm);
-	dfft_get_local_size_t<double>(n[1], n[2], n[0], osize_2, ostart_2, c_comm);
+  dfft_get_local_size_t<double>(n[0], n[1], n[2], osize_0, ostart_0, c_comm);
+  dfft_get_local_size_t<double>(n[0], n[2], n[1], osize_1, ostart_1, c_comm);
+  dfft_get_local_size_t<double>(n[1], n[2], n[0], osize_2, ostart_2, c_comm);
 
-	std::swap(osize_1[1], osize_1[2]);
-	std::swap(ostart_1[1], ostart_1[2]);
+  std::swap(osize_1[1], osize_1[2]);
+  std::swap(ostart_1[1], ostart_1[2]);
 
-	std::swap(ostart_2[1], ostart_2[2]);
-	std::swap(ostart_2[0], ostart_2[1]);
-	std::swap(osize_2[1], osize_2[2]);
-	std::swap(osize_2[0], osize_2[1]);
+  std::swap(ostart_2[1], ostart_2[2]);
+  std::swap(ostart_2[0], ostart_2[1]);
+  std::swap(osize_2[1], osize_2[2]);
+  std::swap(osize_2[0], osize_2[1]);
 
-	for (int i = 0; i < 3; i++) {
-		osize_1i[i] = osize_1[i];
-		osize_2i[i] = osize_2[i];
-		ostart_1i[i] = ostart_1[i];
-		ostart_2i[i] = ostart_2[i];
-	}
+  for (int i = 0; i < 3; i++) {
+    osize_1i[i] = osize_1[i];
+    osize_2i[i] = osize_2[i];
+    ostart_1i[i] = ostart_1[i];
+    ostart_2i[i] = ostart_2[i];
+  }
 
-	// fplan_0
-	{
-		int f_inembed[1] = { NZ };
-		int f_onembed[1] = { NZ };
-		int idist = (NZ);
-		int odist = (NZ);
-		int istride = 1;
-		int ostride = 1;
-		int batch = osize_0[0] * osize_0[1];  //NX;
+  // fplan_0
+  {
+    int f_inembed[1] = { NZ };
+    int f_onembed[1] = { NZ };
+    int idist = (NZ);
+    int odist = (NZ);
+    int istride = 1;
+    int ostride = 1;
+    int batch = osize_0[0] * osize_0[1];  //NX;
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_0, 1, &n[2], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_Z2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_0 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
-	// fplan_1
-	{
-		int f_inembed[1] = { NY };
-		int f_onembed[1] = { NY };
-		int idist = 1;
-		int odist = 1;
-		int istride = osize_1[2];
-		int ostride = osize_1[2];
-		int batch = osize_1[2];
+    if (batch != 0) {
+      cufft_error = cufftPlanMany(&plan->fplan_0, 1, &n[2], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_Z2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_0 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
+  // fplan_1
+  {
+    int f_inembed[1] = { NY };
+    int f_onembed[1] = { NY };
+    int idist = 1;
+    int odist = 1;
+    int istride = osize_1[2];
+    int ostride = osize_1[2];
+    int batch = osize_1[2];
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_1, 1, &n[1], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_Z2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_1 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
-	// fplan_2
-	{
-		int f_inembed[1] = { NX };
-		int f_onembed[1] = { NX };
-		int idist = 1;
-		int odist = 1;
-		int istride = osize_2[1] * osize_2[2];
-		int ostride = osize_2[1] * osize_2[2];
-		int batch = osize_2[1] * osize_2[2];
-		;
+    if (batch != 0) {
+      cufft_error = cufftPlanMany(&plan->fplan_1, 1, &n[1], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_Z2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_1 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
+  // fplan_2
+  {
+    int f_inembed[1] = { NX };
+    int f_onembed[1] = { NX };
+    int idist = 1;
+    int odist = 1;
+    int istride = osize_2[1] * osize_2[2];
+    int ostride = osize_2[1] * osize_2[2];
+    int batch = osize_2[1] * osize_2[2];
+    ;
 
-		if (batch != 0) {
-			cufft_error = cufftPlanMany(&plan->fplan_2, 1, &n[0], f_inembed,
-					istride, idist, // *inembed, istride, idist
-					f_onembed, ostride, odist, // *onembed, ostride, odist
-					CUFFT_Z2Z, batch);
-			if (cufft_error != CUFFT_SUCCESS) {
-				fprintf(stderr, "CUFFT error: fplan_2 creation failed %d \n",
-						cufft_error);
-				return NULL;
-			}
-			//cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
-		}
-	}
+    if (batch != 0) {
+      cufft_error = cufftPlanMany(&plan->fplan_2, 1, &n[0], f_inembed,
+          istride, idist, // *inembed, istride, idist
+          f_onembed, ostride, odist, // *onembed, ostride, odist
+          CUFFT_Z2Z, batch);
+      if (cufft_error != CUFFT_SUCCESS) {
+        fprintf(stderr, "CUFFT error: fplan_2 creation failed %d \n",
+            cufft_error);
+        return NULL;
+      }
+      //cufftSetCompatibilityMode(fplan,CUFFT_COMPATIBILITY_FFTW_PADDING); if (cudaGetLastError() != cudaSuccess){fprintf(stderr, "Cuda error:Failed at fplan cuda compatibility\n"); return;}
+    }
+  }
 
-	// 1D Decomposition
-	if (plan->oneD) {
-		int NX = n[0], NY = n[1], NZ = n[2];
+  // 1D Decomposition
+  if (plan->oneD) {
+    int NX = n[0], NY = n[1], NZ = n[2];
 
-		plan->alloc_max = alloc_max;
+    plan->alloc_max = alloc_max;
 
-		plan->Mem_mgr = new Mem_Mgr_gpu<double>(NX, NY, (NZ) * 2, c_comm, 1, plan->alloc_max);
-		plan->T_plan_2 = new T_Plan_gpu<double>(NX, NY, (NZ) * 2, plan->Mem_mgr,
-				c_comm);
-		plan->T_plan_2i = new T_Plan_gpu<double>(NY, NX, NZ * 2, plan->Mem_mgr,
-				c_comm);
+    plan->Mem_mgr = new Mem_Mgr_gpu<double>(NX, NY, (NZ) * 2, c_comm, 1, plan->alloc_max);
+    plan->T_plan_2 = new T_Plan_gpu<double>(NX, NY, (NZ) * 2, plan->Mem_mgr,
+        c_comm);
+    plan->T_plan_2i = new T_Plan_gpu<double>(NY, NX, NZ * 2, plan->Mem_mgr,
+        c_comm);
 
-		plan->T_plan_2->alloc_local = alloc_max;
-		plan->T_plan_2i->alloc_local = alloc_max;
-		plan->T_plan_1 = NULL;
-		plan->T_plan_1i = NULL;
+    plan->T_plan_2->alloc_local = alloc_max;
+    plan->T_plan_2i->alloc_local = alloc_max;
+    plan->T_plan_1 = NULL;
+    plan->T_plan_1i = NULL;
 
-		if (flags == ACCFFT_MEASURE) {
-			plan->T_plan_2->which_fast_method_gpu(plan->T_plan_2,
-					(double*) data_out_d);
+    if (flags == ACCFFT_MEASURE) {
+      plan->T_plan_2->which_fast_method_gpu(plan->T_plan_2,
+          (double*) data_out_d);
 
-		} else {
-			plan->T_plan_2->method = 2;
-			plan->T_plan_2->kway = 2;
-		}
-		checkCuda_accfft (cudaDeviceSynchronize());
+    } else {
+      plan->T_plan_2->method = 2;
+      plan->T_plan_2->kway = 2;
+    }
+    checkCuda_accfft (cudaDeviceSynchronize());
 
-		plan->T_plan_2i->method = -plan->T_plan_2->method;
-		plan->T_plan_2i->kway = plan->T_plan_2->kway;
-		plan->T_plan_2i->kway_async = plan->T_plan_2->kway_async;
+    plan->T_plan_2i->method = -plan->T_plan_2->method;
+    plan->T_plan_2i->kway = plan->T_plan_2->kway;
+    plan->T_plan_2i->kway_async = plan->T_plan_2->kway_async;
 
-	} // end 1d c2c
+  } // end 1d c2c
 
-	// 2D Decomposition
-	if (!plan->oneD) {
-		// the reaseon for n_tuples/2 is to avoid splitting of imag and real parts of complex numbers
-		plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[1], n[2], 2, plan->row_comm,
-				osize_0[0], alloc_max);
-		plan->T_plan_1 = new T_Plan_gpu<double>(n[1], n[2], 2, plan->Mem_mgr,
-				plan->row_comm, osize_0[0]);
-		plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], 2 * osize_2[2],
-				plan->Mem_mgr, plan->col_comm);
-		plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], 2 * osize_2i[2],
-				plan->Mem_mgr, plan->col_comm);
-		plan->T_plan_1i = new T_Plan_gpu<double>(n[2], n[1], 2, plan->Mem_mgr,
-				plan->row_comm, osize_1i[0]);
+  // 2D Decomposition
+  if (!plan->oneD) {
+    // the reaseon for n_tuples/2 is to avoid splitting of imag and real parts of complex numbers
+    plan->Mem_mgr = new Mem_Mgr_gpu<double>(n[1], n[2], 2, plan->row_comm,
+        osize_0[0], alloc_max);
+    plan->T_plan_1 = new T_Plan_gpu<double>(n[1], n[2], 2, plan->Mem_mgr,
+        plan->row_comm, osize_0[0]);
+    plan->T_plan_2 = new T_Plan_gpu<double>(n[0], n[1], 2 * osize_2[2],
+        plan->Mem_mgr, plan->col_comm);
+    plan->T_plan_2i = new T_Plan_gpu<double>(n[1], n[0], 2 * osize_2i[2],
+        plan->Mem_mgr, plan->col_comm);
+    plan->T_plan_1i = new T_Plan_gpu<double>(n[2], n[1], 2, plan->Mem_mgr,
+        plan->row_comm, osize_1i[0]);
 
-		plan->T_plan_1->alloc_local = plan->alloc_max;
-		plan->T_plan_2->alloc_local = plan->alloc_max;
-		plan->T_plan_2i->alloc_local = plan->alloc_max;
-		plan->T_plan_1i->alloc_local = plan->alloc_max;
+    plan->T_plan_1->alloc_local = plan->alloc_max;
+    plan->T_plan_2->alloc_local = plan->alloc_max;
+    plan->T_plan_2i->alloc_local = plan->alloc_max;
+    plan->T_plan_1i->alloc_local = plan->alloc_max;
 
-		plan->iplan_0 = -1;
-		plan->iplan_1 = -1;
-		plan->iplan_2 = -1;
+    plan->iplan_0 = -1;
+    plan->iplan_1 = -1;
+    plan->iplan_2 = -1;
 
-		int coords[2], np[2], periods[2];
-		MPI_Cart_get(c_comm, 2, np, periods, coords);
+    int coords[2], np[2], periods[2];
+    MPI_Cart_get(c_comm, 2, np, periods, coords);
 
-		if (flags == ACCFFT_MEASURE) {
-			if (coords[0] == 0) {
-				plan->T_plan_1->which_fast_method_gpu(plan->T_plan_1,
-						(double*) data_out_d, osize_0[0]);
-			}
-		} else {
-			plan->T_plan_1->method = 2;
-			plan->T_plan_1->kway = 2;
-		}
+    if (flags == ACCFFT_MEASURE) {
+      if (coords[0] == 0) {
+        plan->T_plan_1->which_fast_method_gpu(plan->T_plan_1,
+            (double*) data_out_d, osize_0[0]);
+      }
+    } else {
+      plan->T_plan_1->method = 2;
+      plan->T_plan_1->kway = 2;
+    }
 
-		MPI_Bcast(&plan->T_plan_1->method, 1, MPI_INT, 0, c_comm);
-		MPI_Bcast(&plan->T_plan_1->kway, 1, MPI_INT, 0, c_comm);
-		MPI_Bcast(&plan->T_plan_1->kway_async, 1, par::Mpi_datatype<bool>::value(), 0, c_comm);
-		checkCuda_accfft (cudaDeviceSynchronize());
+    MPI_Bcast(&plan->T_plan_1->method, 1, MPI_INT, 0, c_comm);
+    MPI_Bcast(&plan->T_plan_1->kway, 1, MPI_INT, 0, c_comm);
+    MPI_Bcast(&plan->T_plan_1->kway_async, 1, par::Mpi_datatype<bool>::value(), 0, c_comm);
+    checkCuda_accfft (cudaDeviceSynchronize());
 
-		plan->T_plan_1->method = plan->T_plan_1->method;
-		plan->T_plan_2->method = plan->T_plan_1->method;
-		plan->T_plan_2i->method = -plan->T_plan_1->method;
-		plan->T_plan_1i->method = -plan->T_plan_1->method;
+    plan->T_plan_1->method = plan->T_plan_1->method;
+    plan->T_plan_2->method = plan->T_plan_1->method;
+    plan->T_plan_2i->method = -plan->T_plan_1->method;
+    plan->T_plan_1i->method = -plan->T_plan_1->method;
 
-		plan->T_plan_1->kway = plan->T_plan_1->kway;
-		plan->T_plan_2->kway = plan->T_plan_1->kway;
-		plan->T_plan_2i->kway = plan->T_plan_1->kway;
-		plan->T_plan_1i->kway = plan->T_plan_1->kway;
+    plan->T_plan_1->kway = plan->T_plan_1->kway;
+    plan->T_plan_2->kway = plan->T_plan_1->kway;
+    plan->T_plan_2i->kway = plan->T_plan_1->kway;
+    plan->T_plan_1i->kway = plan->T_plan_1->kway;
 
-		plan->T_plan_1->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_2->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_2i->kway_async = plan->T_plan_1->kway_async;
-		plan->T_plan_1i->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_1->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_2->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_2i->kway_async = plan->T_plan_1->kway_async;
+    plan->T_plan_1i->kway_async = plan->T_plan_1->kway_async;
 
-	} // end 2d c2c
+  } // end 2d c2c
 
-	plan->c2c_plan_baked = true;
-	return plan;
+  plan->c2c_plan_baked = true;
+  return plan;
 } // end accfft_plan_dft_c2c_gpu
 
 /**
@@ -1001,198 +1014,198 @@ accfft_plan_gpu* accfft_plan_dft_3d_c2c_gpu(int * n, Complex * data_d,
  * @param XYZ a bit set field that determines which directions FFT should be executed
  */
 void accfft_execute_c2c_gpu(accfft_plan_gpu* plan, int direction,
-		Complex * data_d, Complex * data_out_d, double * timer,
-		std::bitset<3> xyz) {
+    Complex * data_d, Complex * data_out_d, double * timer,
+    std::bitset<3> xyz) {
 
-	if (!plan->c2c_plan_baked) {
-		if (plan->procid == 0)
-			std::cout
-					<< "Error. r2c plan has not been made correctly. Please first create the plan before calling execute functions."
-					<< std::endl;
-		return;
-	}
+  if (!plan->c2c_plan_baked) {
+    if (plan->procid == 0)
+      std::cout
+          << "Error. r2c plan has not been made correctly. Please first create the plan before calling execute functions."
+          << std::endl;
+    return;
+  }
 
-	if (data_d == NULL)
-		data_d = plan->data_c;
-	if (data_out_d == NULL)
-		data_out_d = plan->data_out_c;
-	int * coords = plan->coord;
-	int procid = plan->procid;
-	double fft_time = 0;
-	double timings[5] = { 0 };
+  if (data_d == NULL)
+    data_d = plan->data_c;
+  if (data_out_d == NULL)
+    data_out_d = plan->data_out_c;
+  int * coords = plan->coord;
+  int procid = plan->procid;
+  double fft_time = 0;
+  double timings[5] = { 0 };
 
-	int NY = plan->N[1];
-	cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
-	cudaEvent_t fft_startEvent, fft_stopEvent;
-	checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
-	checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_startEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
-	cufftResult_t cufft_error;
-	float dummy_time = 0;
+  int NY = plan->N[1];
+  cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
+  cudaEvent_t fft_startEvent, fft_stopEvent;
+  checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
+  checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_startEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
+  cufftResult_t cufft_error;
+  float dummy_time = 0;
 
-	int *osize_0 = plan->osize_0, *ostart_0 = plan->ostart_0;
-	int *osize_1 = plan->osize_1, *ostart_1 = plan->ostart_1;
-	int *osize_2 = plan->osize_2, *ostart_2 = plan->ostart_2;
-	int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
-	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
+  int *osize_0 = plan->osize_0, *ostart_0 = plan->ostart_0;
+  int *osize_1 = plan->osize_1, *ostart_1 = plan->ostart_1;
+  int *osize_2 = plan->osize_2, *ostart_2 = plan->ostart_2;
+  int *osize_1i = plan->osize_1i, *ostart_1i = plan->ostart_1i;
+  int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
 
-	if (direction == -1) {
-		/**************************************************************/
-		/*******************  N0/P0 x N1/P1 x N2 **********************/
-		/**************************************************************/
-		// FFT in Z direction
-		if (xyz[2]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_0, (cufftDoubleComplex*) data_d,
-							(cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		} else
-			data_out_d = data_d;
+  if (direction == -1) {
+    /**************************************************************/
+    /*******************  N0/P0 x N1/P1 x N2 **********************/
+    /**************************************************************/
+    // FFT in Z direction
+    if (xyz[2]) {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      checkCuda_accfft(
+          cufftExecZ2Z(plan->fplan_0, (cufftDoubleComplex*) data_d,
+              (cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    } else
+      data_out_d = data_d;
 
-		if (!plan->oneD) {
-			plan->T_plan_1->execute_gpu(plan->T_plan_1, (double*) data_out_d,
-					timings, 2, osize_0[0], coords[0]);
-		}
-		checkCuda_accfft (cudaDeviceSynchronize());
-		/**************************************************************/
-		/*******************  N0/P0 x N1 x N2/P1 **********************/
-		/**************************************************************/
-		if (xyz[1]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (size_t i = 0; i < (size_t) osize_1[0]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2Z(plan->fplan_1,
-								(cufftDoubleComplex*) &data_out_d[i * osize_1[1]
-										* osize_1[2]],
-								(cufftDoubleComplex*) &data_out_d[i * osize_1[1]
-										* osize_1[2]], CUFFT_FORWARD));
-			}
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
+    if (!plan->oneD) {
+      plan->T_plan_1->execute_gpu(plan->T_plan_1, (double*) data_out_d,
+          timings, 2, osize_0[0], coords[0]);
+    }
+    checkCuda_accfft (cudaDeviceSynchronize());
+    /**************************************************************/
+    /*******************  N0/P0 x N1 x N2/P1 **********************/
+    /**************************************************************/
+    if (xyz[1]) {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      for (size_t i = 0; i < (size_t) osize_1[0]; ++i) {
+        checkCuda_accfft(
+            cufftExecZ2Z(plan->fplan_1,
+                (cufftDoubleComplex*) &data_out_d[i * osize_1[1]
+                    * osize_1[2]],
+                (cufftDoubleComplex*) &data_out_d[i * osize_1[1]
+                    * osize_1[2]], CUFFT_FORWARD));
+      }
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
 
 
-		if (plan->oneD) {
-			plan->T_plan_2->execute_gpu(plan->T_plan_2, (double*) data_out_d,
-					timings, 2);
-		} else {
-			plan->T_plan_2->execute_gpu(plan->T_plan_2, (double*) data_out_d,
-					timings, 2, 1, coords[1]);
-		}
-		checkCuda_accfft(cudaDeviceSynchronize());
-		/**************************************************************/
-		/*******************  N0 x N1/P0 x N2/P1 **********************/
-		/**************************************************************/
-		if (xyz[0]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_2,
-							(cufftDoubleComplex*) data_out_d,
-							(cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
+    if (plan->oneD) {
+      plan->T_plan_2->execute_gpu(plan->T_plan_2, (double*) data_out_d,
+          timings, 2);
+    } else {
+      plan->T_plan_2->execute_gpu(plan->T_plan_2, (double*) data_out_d,
+          timings, 2, 1, coords[1]);
+    }
+    checkCuda_accfft(cudaDeviceSynchronize());
+    /**************************************************************/
+    /*******************  N0 x N1/P0 x N2/P1 **********************/
+    /**************************************************************/
+    if (xyz[0]) {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      checkCuda_accfft(
+          cufftExecZ2Z(plan->fplan_2,
+              (cufftDoubleComplex*) data_out_d,
+              (cufftDoubleComplex*) data_out_d, CUFFT_FORWARD));
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
 
-	} else if (direction == 1) {
-		if (xyz[0]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_d,
-							(cufftDoubleComplex*) data_d, CUFFT_INVERSE));
-			checkCuda_accfft (cudaDeviceSynchronize());checkCuda_accfft
-			(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
+  } else if (direction == 1) {
+    if (xyz[0]) {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      checkCuda_accfft(
+          cufftExecZ2Z(plan->fplan_2, (cufftDoubleComplex*) data_d,
+              (cufftDoubleComplex*) data_d, CUFFT_INVERSE));
+      checkCuda_accfft (cudaDeviceSynchronize());checkCuda_accfft
+      (cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
 
-		if (plan->oneD) {
-			plan->T_plan_2i->execute_gpu(plan->T_plan_2i, (double*) data_d,
-					timings, 1);
-		} else {
-			plan->T_plan_2i->execute_gpu(plan->T_plan_2i, (double*) data_d,
-					timings, 1, 1, coords[1]);
-		}
-		checkCuda_accfft (cudaDeviceSynchronize());
-		/**************************************************************/
-		/*******************  N0/P0 x N1 x N2/P1 **********************/
-		/**************************************************************/
-		if (xyz[1]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
-				checkCuda_accfft(
-						cufftExecZ2Z(plan->fplan_1,
-								(cufftDoubleComplex*) &data_d[i * NY
-										* osize_1i[2]],
-								(cufftDoubleComplex*) &data_d[i * NY
-										* osize_1i[2]], CUFFT_INVERSE));
-			}
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		}
+    if (plan->oneD) {
+      plan->T_plan_2i->execute_gpu(plan->T_plan_2i, (double*) data_d,
+          timings, 1);
+    } else {
+      plan->T_plan_2i->execute_gpu(plan->T_plan_2i, (double*) data_d,
+          timings, 1, 1, coords[1]);
+    }
+    checkCuda_accfft (cudaDeviceSynchronize());
+    /**************************************************************/
+    /*******************  N0/P0 x N1 x N2/P1 **********************/
+    /**************************************************************/
+    if (xyz[1]) {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      for (size_t i = 0; i < (size_t) osize_1i[0]; ++i) {
+        checkCuda_accfft(
+            cufftExecZ2Z(plan->fplan_1,
+                (cufftDoubleComplex*) &data_d[i * NY
+                    * osize_1i[2]],
+                (cufftDoubleComplex*) &data_d[i * NY
+                    * osize_1i[2]], CUFFT_INVERSE));
+      }
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    }
 
-		if (!plan->oneD) {
-			plan->T_plan_1i->execute_gpu(plan->T_plan_1i, (double*) data_d,
-					timings, 1, osize_1i[0], coords[0]);
-		}
-		checkCuda_accfft(cudaDeviceSynchronize());
-		/**************************************************************/
-		/*******************  N0/P0 x N1/P1 x N2 **********************/
-		/**************************************************************/
+    if (!plan->oneD) {
+      plan->T_plan_1i->execute_gpu(plan->T_plan_1i, (double*) data_d,
+          timings, 1, osize_1i[0], coords[0]);
+    }
+    checkCuda_accfft(cudaDeviceSynchronize());
+    /**************************************************************/
+    /*******************  N0/P0 x N1/P1 x N2 **********************/
+    /**************************************************************/
 
-		if (xyz[2]) {
-			checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
-			checkCuda_accfft(
-					cufftExecZ2Z(plan->fplan_0, (cufftDoubleComplex*) data_d,
-							(cufftDoubleComplex*) data_out_d, CUFFT_INVERSE));
-			checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
-			checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
-			checkCuda_accfft(
-					cudaEventElapsedTime(&dummy_time, fft_startEvent,
-							fft_stopEvent));
-			fft_time += dummy_time / 1000;
-		} else
-			data_out_d = data_d;
+    if (xyz[2]) {
+      checkCuda_accfft(cudaEventRecord(fft_startEvent, 0));
+      checkCuda_accfft(
+          cufftExecZ2Z(plan->fplan_0, (cufftDoubleComplex*) data_d,
+              (cufftDoubleComplex*) data_out_d, CUFFT_INVERSE));
+      checkCuda_accfft(cudaEventRecord(fft_stopEvent, 0));
+      checkCuda_accfft(cudaEventSynchronize(fft_stopEvent)); // wait until fft is executed
+      checkCuda_accfft(
+          cudaEventElapsedTime(&dummy_time, fft_startEvent,
+              fft_stopEvent));
+      fft_time += dummy_time / 1000;
+    } else
+      data_out_d = data_d;
 
-	}
+  }
 
-	checkCuda_accfft(cudaEventDestroy(memcpy_startEvent));
-	checkCuda_accfft(cudaEventDestroy(memcpy_stopEvent));
-	checkCuda_accfft(cudaEventDestroy(fft_startEvent));
-	checkCuda_accfft(cudaEventDestroy(fft_stopEvent));
-	timings[4] += fft_time;
-	if (timer == NULL) {
-		//delete [] timings;
-	} else {
-		timer[0] += timings[0];
-		timer[1] += timings[1];
-		timer[2] += timings[2];
-		timer[3] += timings[3];
-		timer[4] += timings[4];
-	}
+  checkCuda_accfft(cudaEventDestroy(memcpy_startEvent));
+  checkCuda_accfft(cudaEventDestroy(memcpy_stopEvent));
+  checkCuda_accfft(cudaEventDestroy(fft_startEvent));
+  checkCuda_accfft(cudaEventDestroy(fft_stopEvent));
+  timings[4] += fft_time;
+  if (timer == NULL) {
+    //delete [] timings;
+  } else {
+    timer[0] += timings[0];
+    timer[1] += timings[1];
+    timer[2] += timings[2];
+    timer[3] += timings[3];
+    timer[4] += timings[4];
+  }
 
-	return;
+  return;
 } // end accfft_execute_c2c_gpu
 
 /**
@@ -1200,7 +1213,7 @@ void accfft_execute_c2c_gpu(accfft_plan_gpu* plan, int direction,
  * @param plan Input plan to be destroyed.
  */
 void accfft_destroy_plan(accfft_plan_gpu * plan) {
-	return (accfft_destroy_plan_gpu(plan));
+  return (accfft_destroy_plan_gpu(plan));
 }
 
 /**
@@ -1209,84 +1222,84 @@ void accfft_destroy_plan(accfft_plan_gpu * plan) {
  */
 void accfft_destroy_plan_gpu(accfft_plan_gpu * plan) {
 
-	if (plan->T_plan_1 != NULL)
-		delete (plan->T_plan_1);
-	if (plan->T_plan_1i != NULL)
-		delete (plan->T_plan_1i);
-	if (plan->T_plan_2 != NULL)
-		delete (plan->T_plan_2);
-	if (plan->T_plan_2i != NULL)
-		delete (plan->T_plan_2i);
-	if (plan->Mem_mgr != NULL)
-		delete (plan->Mem_mgr);
-	if (plan->fplan_x != -1)
-		cufftDestroy(plan->fplan_x);
-	if (plan->fplan_y != -1)
-		cufftDestroy(plan->fplan_y);
-	if (plan->iplan_x != -1)
-		cufftDestroy(plan->iplan_x);
-	if (plan->iplan_y != -1)
-		cufftDestroy(plan->iplan_y);
-	if (plan->T_plan_y != NULL)
-		delete (plan->T_plan_y);
-	if (plan->T_plan_yi != NULL)
-		delete (plan->T_plan_yi);
+  if (plan->T_plan_1 != NULL)
+    delete (plan->T_plan_1);
+  if (plan->T_plan_1i != NULL)
+    delete (plan->T_plan_1i);
+  if (plan->T_plan_2 != NULL)
+    delete (plan->T_plan_2);
+  if (plan->T_plan_2i != NULL)
+    delete (plan->T_plan_2i);
+  if (plan->Mem_mgr != NULL)
+    delete (plan->Mem_mgr);
+  if (plan->fplan_x != -1)
+    cufftDestroy(plan->fplan_x);
+  if (plan->fplan_y != -1)
+    cufftDestroy(plan->fplan_y);
+  if (plan->iplan_x != -1)
+    cufftDestroy(plan->iplan_x);
+  if (plan->iplan_y != -1)
+    cufftDestroy(plan->iplan_y);
+  if (plan->T_plan_y != NULL)
+    delete (plan->T_plan_y);
+  if (plan->T_plan_yi != NULL)
+    delete (plan->T_plan_yi);
 
-	if (plan->fplan_0 != -1)
-		cufftDestroy(plan->fplan_0);
-	if (plan->fplan_1 != -1)
-		cufftDestroy(plan->fplan_1);
-	if (plan->fplan_2 != -1)
-		cufftDestroy(plan->fplan_2);
+  if (plan->fplan_0 != -1)
+    cufftDestroy(plan->fplan_0);
+  if (plan->fplan_1 != -1)
+    cufftDestroy(plan->fplan_1);
+  if (plan->fplan_2 != -1)
+    cufftDestroy(plan->fplan_2);
 
-	if (plan->iplan_0 != -1)
-		cufftDestroy(plan->iplan_0);
-	if (plan->iplan_1 != -1)
-		cufftDestroy(plan->iplan_1);
-	if (plan->iplan_2 != -1)
-		cufftDestroy(plan->iplan_2);
+  if (plan->iplan_0 != -1)
+    cufftDestroy(plan->iplan_0);
+  if (plan->iplan_1 != -1)
+    cufftDestroy(plan->iplan_1);
+  if (plan->iplan_2 != -1)
+    cufftDestroy(plan->iplan_2);
 
-	MPI_Comm_free(&plan->row_comm);
-	MPI_Comm_free(&plan->col_comm);
-	return;
+  MPI_Comm_free(&plan->row_comm);
+  MPI_Comm_free(&plan->col_comm);
+  return;
 } //end accfft_destroy_plan_gpu
 
 template<typename T, typename Tc>
 void accfft_execute_r2c_gpu_t(accfft_plan_gpu* plan, T* data, Tc* data_out,
-		double * timer, std::bitset<3> XYZ) {
-	accfft_execute_r2c_gpu(plan, data, data_out, timer, XYZ);
-	return;
+    double * timer, std::bitset<3> XYZ) {
+  accfft_execute_r2c_gpu(plan, data, data_out, timer, XYZ);
+  return;
 }
 template<typename Tc, typename T>
 void accfft_execute_c2r_gpu_t(accfft_plan_gpu* plan, Tc* data, T* data_out,
-		double * timer, std::bitset<3> XYZ) {
-	accfft_execute_c2r_gpu(plan, data, data_out, timer, XYZ);
-	return;
+    double * timer, std::bitset<3> XYZ) {
+  accfft_execute_c2r_gpu(plan, data, data_out, timer, XYZ);
+  return;
 }
 template void accfft_execute_r2c_gpu_t<double, Complex>(accfft_plan_gpu* plan,
-		double* data, Complex* data_out, double * timer, std::bitset<3> XYZ);
+    double* data, Complex* data_out, double * timer, std::bitset<3> XYZ);
 template void accfft_execute_c2r_gpu_t<Complex, double>(accfft_plan_gpu* plan,
-		Complex* data, double* data_out, double * timer, std::bitset<3> XYZ);
+    Complex* data, double* data_out, double * timer, std::bitset<3> XYZ);
 
 // templates for execution only in z direction
 void accfft_execute_z_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
-		double * data_out_d, double * timer) {
+    double * data_out_d, double * timer) {
 
-	if (data_d == NULL)
-		data_d = plan->data;
-	if (data_out_d == NULL)
-		data_out_d = plan->data_out;
+  if (data_d == NULL)
+    data_d = plan->data;
+  if (data_out_d == NULL)
+    data_out_d = plan->data_out;
 
-	int * coords = plan->coord;
-	int procid = plan->procid;
-	double fft_time = 0;
-	double timings[5] = { 0 };
+  int * coords = plan->coord;
+  int procid = plan->procid;
+  double fft_time = 0;
+  double timings[5] = { 0 };
 
-	cudaEvent_t fft_startEvent, fft_stopEvent;
-	checkCuda_accfft(cudaEventCreate(&fft_startEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
-	int NY = plan->N[1];
-	float dummy_time = 0;
+  cudaEvent_t fft_startEvent, fft_stopEvent;
+  checkCuda_accfft(cudaEventCreate(&fft_startEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
+  int NY = plan->N[1];
+  float dummy_time = 0;
 
   if (direction == -1) {
     /**************************************************************/
@@ -1319,8 +1332,8 @@ void accfft_execute_z_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
           fft_stopEvent));
     fft_time += dummy_time / 1000;
   }
-	checkCuda_accfft(cudaEventDestroy(fft_startEvent));
-	checkCuda_accfft(cudaEventDestroy(fft_stopEvent));
+  checkCuda_accfft(cudaEventDestroy(fft_startEvent));
+  checkCuda_accfft(cudaEventDestroy(fft_stopEvent));
 
   timings[4] += fft_time;
   if (timer == NULL) {
@@ -1377,33 +1390,33 @@ template void accfft_execute_c2r_z_gpu_t<Complex, double>(accfft_plan_gpu* plan,
 
 // templates for execution only in y direction
 void accfft_execute_y_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
-		double * data_out_d, double * timer) {
+    double * data_out_d, double * timer) {
 
-	if (data_d == NULL)
-		data_d = plan->data;
-	if (data_out_d == NULL)
-		data_out_d = plan->data_out;
+  if (data_d == NULL)
+    data_d = plan->data;
+  if (data_out_d == NULL)
+    data_out_d = plan->data_out;
 
-	int * coords = plan->coord;
-	int procid = plan->procid;
-	double fft_time = 0;
-	double timings[5] = { 0 };
+  int * coords = plan->coord;
+  int procid = plan->procid;
+  double fft_time = 0;
+  double timings[5] = { 0 };
 
-	cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
-	cudaEvent_t fft_startEvent, fft_stopEvent;
-	checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
-	checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_startEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
-	int NY = plan->N[1];
-	float dummy_time = 0;
+  cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
+  cudaEvent_t fft_startEvent, fft_stopEvent;
+  checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
+  checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_startEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
+  int NY = plan->N[1];
+  float dummy_time = 0;
   int64_t alloc_max = plan->alloc_max;
-	int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
-	int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
-	//int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
-	int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
-	//int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
-	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
+  int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
+  int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
+  //int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
+  int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
+  //int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
+  int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
   int *osize_y = plan->osize_y;
   int *osize_yi = plan->osize_yi;
   int64_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
@@ -1529,32 +1542,32 @@ template void accfft_execute_c2r_y_gpu_t<Complex, double>(accfft_plan_gpu* plan,
 
 // templates for execution only in x direction
 void accfft_execute_x_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
-		double * data_out_d, double * timer) {
+    double * data_out_d, double * timer) {
 
-	if (data_d == NULL)
-		data_d = plan->data;
-	if (data_out_d == NULL)
-		data_out_d = plan->data_out;
+  if (data_d == NULL)
+    data_d = plan->data;
+  if (data_out_d == NULL)
+    data_out_d = plan->data_out;
 
-	int * coords = plan->coord;
-	int procid = plan->procid;
-	double fft_time = 0;
-	double timings[5] = { 0 };
+  int * coords = plan->coord;
+  int procid = plan->procid;
+  double fft_time = 0;
+  double timings[5] = { 0 };
 
-	cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
-	cudaEvent_t fft_startEvent, fft_stopEvent;
-	checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
-	checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_startEvent));
-	checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
-	float dummy_time = 0;
+  cudaEvent_t memcpy_startEvent, memcpy_stopEvent;
+  cudaEvent_t fft_startEvent, fft_stopEvent;
+  checkCuda_accfft(cudaEventCreate(&memcpy_startEvent));
+  checkCuda_accfft(cudaEventCreate(&memcpy_stopEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_startEvent));
+  checkCuda_accfft(cudaEventCreate(&fft_stopEvent));
+  float dummy_time = 0;
   size_t alloc_max = plan->alloc_max;
-	int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
-	int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
-	//int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
-	int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
-	//int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
-	int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
+  int *osize_0 = plan->osize_0; // *ostart_0 =plan->ostart_0;
+  int *osize_1 = plan->osize_1; // *ostart_1 =plan->ostart_1;
+  //int *osize_2 =plan->osize_2, *ostart_2 =plan->ostart_2;
+  int *osize_1i = plan->osize_1i;  //*ostart_1i=plan->ostart_1i;
+  //int *osize_2i=plan->osize_2i,*ostart_2i=plan->ostart_2i;
+  int *osize_2i = plan->osize_2i, *ostart_2i = plan->ostart_2i;
   int *osize_x = plan->osize_x;
   int *osize_xi = plan->osize_xi;
   size_t N_local = plan->isize[0] * plan->isize[1] * plan->isize[2];
@@ -1569,7 +1582,7 @@ void accfft_execute_x_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
     cudaMemcpy(cwork_d, data_d, N_local * sizeof(double), cudaMemcpyDeviceToDevice);
     timings[0] += +MPI_Wtime();
 
-		plan->T_plan_x->execute_gpu(plan->T_plan_x, cwork_d, timings, 2);
+    plan->T_plan_x->execute_gpu(plan->T_plan_x, cwork_d, timings, 2);
     /**************************************************************/
     /*******************  N0/P0 x N1 x N2/P1 **********************/
     /**************************************************************/
@@ -1598,7 +1611,7 @@ void accfft_execute_x_gpu(accfft_plan_gpu* plan, int direction, double * data_d,
           fft_stopEvent));
     fft_time += dummy_time / 1000;
 
-		plan->T_plan_xi->execute_gpu(plan->T_plan_xi, data_d, timings, 1);
+    plan->T_plan_xi->execute_gpu(plan->T_plan_xi, data_d, timings, 1);
     timings[0] += -MPI_Wtime();
     cudaMemcpy(data_out_d, data_d, N_local * sizeof(double), cudaMemcpyDeviceToDevice);
     timings[0] += +MPI_Wtime();

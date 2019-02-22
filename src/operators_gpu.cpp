@@ -52,21 +52,21 @@ template<> void daxpy_gpu<double>(const long long int n, const double alpha,
 
 /* Double Precision Instantiation */
 template void accfft_grad_gpu_slow_t<double, accfft_plan_gpu>(double * A_x,
-		double *A_y, double *A_z, double *A, accfft_plan_gpu *plan,
-		std::bitset<3>* pXYZ, double* timer);
+    double *A_y, double *A_z, double *A, accfft_plan_gpu *plan,
+    std::bitset<3>* pXYZ, double* timer);
 template void accfft_grad_gpu_t<double, accfft_plan_gpu>(double * A_x,
-		double *A_y, double *A_z, double *A, accfft_plan_gpu *plan,
-		std::bitset<3>* pXYZ, double* timer);
+    double *A_y, double *A_z, double *A, accfft_plan_gpu *plan,
+    std::bitset<3>* pXYZ, double* timer);
 template void accfft_laplace_gpu_t<double, accfft_plan_gpu>(double * LA,
-		double *A, accfft_plan_gpu *plan, double* timer);
+    double *A, accfft_plan_gpu *plan, double* timer);
 template void accfft_divergence_gpu_slow_t<double, accfft_plan_gpu>(double* divA,
-		double * A_x, double *A_y, double *A_z, accfft_plan_gpu *plan,
-		double* timer);
+    double * A_x, double *A_y, double *A_z, accfft_plan_gpu *plan,
+    double* timer);
 template void accfft_divergence_gpu_t<double, accfft_plan_gpu>(double* divA,
-		double * A_x, double *A_y, double *A_z, accfft_plan_gpu *plan,
-		double* timer);
+    double * A_x, double *A_y, double *A_z, accfft_plan_gpu *plan,
+    double* timer);
 template void accfft_biharmonic_gpu_t<double, accfft_plan_gpu>(double * LA,
-		double *A, accfft_plan_gpu *plan, double* timer);
+    double *A, accfft_plan_gpu *plan, double* timer);
 
 /**
  * Computes double precision gradient of its input real data A, and returns the x, y, and z components
@@ -83,9 +83,9 @@ template void accfft_biharmonic_gpu_t<double, accfft_plan_gpu>(double * LA,
  * @param timer See \ref timer for more details.
  */
 void accfft_grad_gpu(double * A_x, double *A_y, double *A_z, double *A,
-		accfft_plan_gpu *plan, std::bitset<3>* pXYZ, double* timer) {
-	accfft_grad_gpu_t<double, accfft_plan_gpu>(A_x, A_y, A_z, A, plan, pXYZ,
-			timer);
+    accfft_plan_gpu *plan, std::bitset<3>* pXYZ, double* timer) {
+  accfft_grad_gpu_t<double, accfft_plan_gpu>(A_x, A_y, A_z, A, plan, pXYZ,
+      timer);
 }
 
 /**
@@ -98,8 +98,8 @@ void accfft_grad_gpu(double * A_x, double *A_y, double *A_z, double *A,
  * @param timer See \ref timer for more details.
  */
 void accfft_laplace_gpu(double * LA, double *A, accfft_plan_gpu *plan,
-		double* timer) {
-	accfft_laplace_gpu_t<double, accfft_plan_gpu>(LA, A, plan, timer);
+    double* timer) {
+  accfft_laplace_gpu_t<double, accfft_plan_gpu>(LA, A, plan, timer);
 }
 
 /**
@@ -115,9 +115,9 @@ void accfft_laplace_gpu(double * LA, double *A, accfft_plan_gpu *plan,
  * @param timer See \ref timer for more details.
  */
 void accfft_divergence_gpu(double* divA, double * A_x, double *A_y, double *A_z,
-		accfft_plan_gpu *plan, double* timer) {
-	accfft_divergence_gpu_t<double, accfft_plan_gpu>(divA, A_x, A_y, A_z, plan,
-			timer);
+    accfft_plan_gpu *plan, double* timer) {
+  accfft_divergence_gpu_t<double, accfft_plan_gpu>(divA, A_x, A_y, A_z, plan,
+      timer);
 }
 
 /**
@@ -130,6 +130,6 @@ void accfft_divergence_gpu(double* divA, double * A_x, double *A_y, double *A_z,
  * @param timer See \ref timer for more details.
  */
 void accfft_biharmonic_gpu(double * BA, double *A, accfft_plan_gpu *plan,
-		double* timer) {
-	accfft_biharmonic_gpu_t<double, accfft_plan_gpu>(BA, A, plan, timer);
+    double* timer) {
+  accfft_biharmonic_gpu_t<double, accfft_plan_gpu>(BA, A, plan, timer);
 }

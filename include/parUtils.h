@@ -42,15 +42,14 @@ namespace par {
 
 template<class T, bool ASYNC>
 int Mpi_Alltoallv_dense(T* sendbuf, int* sendcnts, int* sdispls, T* recvbuf,
-		int* recvcnts, int* rdispls, MPI_Comm comm, int kway = KWAY);
+    int* recvcnts, int* rdispls, MPI_Comm comm, int kway = KWAY);
 
 template<class T, bool ASYNC>
 int Mpi_Alltoallv_dense_gpu(T* sendbuf, int* sendcnts, int* sdispls, T* recvbuf,
-		int* recvcnts, int* rdispls, MPI_Comm comm, int kway = KWAY);
+    int* recvcnts, int* rdispls, MPI_Comm comm, int kway = KWAY);
 
 }
 
 #include "parUtils.txx"
 
 #endif
-

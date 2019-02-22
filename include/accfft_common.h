@@ -47,32 +47,32 @@ void* accfft_alloc(ptrdiff_t size);
 void accfft_free(void * ptr);
 template <typename T>
 size_t dfft_get_local_size_t(int N0, int N1, int N2, int * isize, int * istart,
-		MPI_Comm c_comm);
+    MPI_Comm c_comm);
 
 template<typename T>
 size_t accfft_local_size_dft_r2c_t(int * n, int * isize, int * istart, int * osize,
-		int *ostart, MPI_Comm c_comm);
+    int *ostart, MPI_Comm c_comm);
 template<typename T>
 size_t accfft_local_size_dft_c2c_t(int * n, int * isize, int * istart, int * osize,
-		int *ostart, MPI_Comm c_comm);
+    int *ostart, MPI_Comm c_comm);
 
 #endif
 #ifndef _PNETCDF_IO_H_
 #define _PNETCDF_IO_H_
 
 void read_pnetcdf(const std::string &filename,
-		  MPI_Offset         starts[3],
-		  MPI_Offset         counts[3],
+      MPI_Offset         starts[3],
+      MPI_Offset         counts[3],
       MPI_Comm           c_comm,
-		  int                gsizes[3],
-		  double            *localData);
+      int                gsizes[3],
+      double            *localData);
 
 void write_pnetcdf(const std::string &filename,
-		   MPI_Offset         starts[3],
-		   MPI_Offset         counts[3],
+       MPI_Offset         starts[3],
+       MPI_Offset         counts[3],
        MPI_Comm           c_comm,
-		   int                gsizes[3],
-		   double            *localData);
+       int                gsizes[3],
+       double            *localData);
 
 
 #endif // _PNETCDF_IO_H_
@@ -80,16 +80,16 @@ void write_pnetcdf(const std::string &filename,
 #define _PNETCDF_IO_F_H_
 
 void read_pnetcdf(const std::string &filename,
-		  MPI_Offset         starts[3],
-		  MPI_Offset         counts[3],
+      MPI_Offset         starts[3],
+      MPI_Offset         counts[3],
       MPI_Comm           c_comm,
-		  int                gsizes[3],
-		  float            *localData);
+      int                gsizes[3],
+      float            *localData);
 
 void write_pnetcdf(const std::string &filename,
-		   MPI_Offset         starts[3],
-		   MPI_Offset         counts[3],
+       MPI_Offset         starts[3],
+       MPI_Offset         counts[3],
        MPI_Comm           c_comm,
-		   int                gsizes[3],
-		   float            *localData);
+       int                gsizes[3],
+       float            *localData);
 #endif // _PNETCDF_IO_F_H_
